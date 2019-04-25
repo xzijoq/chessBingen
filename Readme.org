@@ -1,0 +1,1 @@
+* perhaps implemeemt the pieces as haviing the property sliding(horizontal, vertical,diagonal) or jumper (look into firemax and stuff

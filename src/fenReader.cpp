@@ -1,7 +1,8 @@
+#include <assert.h>
 #include <cstring>
 #include <iostream>
 #include <regex>  //to inititally validate fen
-
+#include<vector>
 /*
 S/O means selectively optional
 1. reads fen and validate it
@@ -15,8 +16,16 @@ S/O means selectively optional
 
 using namespace std;
 
-void chessFen( const string *fen )
+
+char         board[ 180 ];
+class wow
 {
+ 
+};
+
+void chessFen( string fen )
+{
+  regex isNum( "[0-9]" );
   /*broad check, check only format*/
   regex passOne(
       "(^)(position[[:s:]])?(fen[[:s:]])?"       // is it from engine optional
@@ -65,12 +74,75 @@ void chessFen( const string *fen )
       "[0-9][0-9]?[0-9]?[0-9]?"        // num of full moves max 9999
   );
 
-  ( regex_match( *fen, passOne ) ) ? cout << "-passOneSucess-"
-                                   : cout << "-failPassOne-";
-  ( regex_match( *fen, passTwo ) ) ? cout << "-passTwoSucess-"
-                                   : cout << "-failPassTwo-";
-  ( regex_match( *fen, passThree ) ) ? cout << "-passThreeSucess-"
-                                     : cout << "-failPassThree-";
+  ( regex_match( fen, passOne ) ) ? cout << "-passOneSucess-"
+                                  : cout << "-failPassOne-";
+  ( regex_match( fen, passTwo ) ) ? cout << "-passTwoSucess-"
+                                  : cout << "-failPassTwo-";
+  ( regex_match( fen, passThree ) ) ? cout << "-passThreeSucess-"
+                                    : cout << "-failPassThree-";
+
+
+  //removeing the fluff
+  size_t posPos = fen.find( "position " );  // length is 9 including space
+  if ( posPos != string::npos && posPos == 0 ) { fen.erase( 0, 9 );
+  }
+  size_t fenPos = fen.find( "fen " );
+  if ( fenPos != string::npos && ( fenPos == 0) )
+  { fen.erase( 0, 4 );
+  }
+  //removed the fluff
+  
+  
+  int flag = 0;
+  int  rel{0};
+
+  cout << "\n";
+  for ( auto ch{0}; ch < fen.size(); ch++ )
+  {
+    if ( fen[ ch ] != '/'  && flag==0 )
+    {
+      if ( isdigit( fen[ ch ] ) )
+      {
+        for ( int i{0}; i < atoi( &fen[ ch ] ); i++ )
+        {        
+          board[rel]='-';
+          cout << board[rel];
+          rel++;
+        }
+        rel--;//WowMan
+      }
+      else
+      {
+        board[rel]=fen[ch];
+        cout << board[ rel ] ;
+      }
+    }
+    else if ( flag==0)
+    {
+      board[rel]='A';
+      cout << endl;
+    }
+    
+   if ( fen[ ch ]==' '  )
+    {
+      flag ++;
+      cout << "\n";
+
+    }
+    if ( flag > 0 )
+    {
+      int h;
+		cout << fen[ ch ];
+	}
+    rel++;
+  }
+  cout << endl;
+  for ( auto i{0}; i < 72; i++ ) 
+  {
+	  cout << board[ i ] << " ";
+    if ( board[ i ] == 'A' ) { cout << endl; }
+  }
+
 };
 
 // clang-format off
