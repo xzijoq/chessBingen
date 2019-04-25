@@ -1,52 +1,95 @@
 #include <cstring>
 #include <iostream>
-#include <regex> //to validate fen
+#include <regex>  //to inititally validate fen
 
 /*
+S/O means selectively optional
 1. reads fen and validate it
-        1.1 pass1 validation is on format that is contains (no, of rows(adds the
-            number of alphabetic charecters to any number found, and validates
-            consistency over the columns))/....(repeat till number
-                        of columns)(space reasd fgen and tell the variation also
-validates number of columns is equal to the number of row( warns if untrue)
+        1.1 pass1 validation is very generous to accomodate varients
+                1.2 pass2 tests for much of fide chess (emphasis on much)
 2. if known reads fen and tell the board size and lists pieces on board
 3. if known identify the variation
 4. draw the board
+5. check if its a valid position
 */
 
 using namespace std;
 
-string fen;
+void chessFen( const string *fen )
+{
+  /*broad check, check only format*/
+  regex passOne(
+      "(^)(position[[:s:]])?(fen[[:s:]])?"       // is it from engine optional
+      "(([a-zA-Z1-9])+/)+"                       // core fen
+      "(([a-zA-Z1-9])+){1}"                      // core fen *rest is optional
+      "([[:s:]][a-zA-Z1-9]{1}"                   // side to move
+      "[[:s:]]([K|-]?[Q|-]?[k|-]?[q|-]?|-)"      // casteling rights(m Empty)
+      "([[:s:]](([a-z]{1}[1-9]{1})|(-)))?"       // en pasant S/O
+      "([[:s:]][0-9][0-9]?[0-9]?[0-9]?[0-9]?)?"  // half moves max 99999
+      "([[:s:]][0-9][0-9]?[0-9]?[0-9]?)?)?"      // num of full moves max 9999
+  );
+  /*checks foe max 8 rows and 8 columns, chekcs for fide chess pieces only
+   * requires core fen though */
+  regex passTwo(
+      "(^)(position[[:s:]])?(fen[[:s:]])?"    // is it from engine optional
+      "(([rnbqkbnrpRNBQKBNRP1-8]){1,8}/){7}"  // core fen
+      "(([rnbqkbnrpRNBQKBNRP1-8]){1,8}){1}"   // core fen *rest is optional
+      "([[:s:]]"                              // space
+      "[b|w|B|W]{1}"                          // side to move
+      "[[:s:]]"                               // space
+      "([K|-]?[Q|-]?[k|-]?[q|-]?|-)"     // casteling rights(can be empty BUG?)
+      "[[:s:]]"                          // space
+      "(([a-z]{1}[1-9]{1})|(-))"         // en pasant TODO: restrict
+      "([[:s:]]"                         // space
+      "[0-9][0-9]?[0-9]?[0-9]?[0-9]?)?"  // half moves max 99999 S/O
+      "([[:s:]]"                         // space
+      "[0-9][0-9]?[0-9]?[0-9]?)?)?"      //  full moves max 9999 S/O
+  );
+  /*Requires full fen exept the start engine thingie
+  as specified in https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation
+  rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+  */
+  regex passThree(
+      "(^)(position[[:s:]])?(fen[[:s:]])?"    // is it from engine optional
+      "(([rnbqkbnrpRNBQKBNRP1-8]){1,8}/){7}"  // core fen
+      "(([rnbqkbnrpRNBQKBNRP1-8]){1,8}){1}"   // core fen *requires the rest
+      "[[:s:]]"                               // space
+      "[b|w]{1}"                              // side to move
+      "[[:s:]]"                               // space
+      "([K|-]?[Q|-]?[k|-]?[q|-]?|-)"   // casteling rights (can be empty BUG?)
+      "[[:s:]]"                        // space
+      "(([a-z]{1}[1-9]{1})|(-))"       // en pasant TODO: restrict
+      "[[:s:]]"                        // space
+      "[0-9][0-9]?[0-9]?[0-9]?[0-9]?"  // number ofhalf moves max 99999
+      "[[:s:]]"                        // space
+      "[0-9][0-9]?[0-9]?[0-9]?"        // num of full moves max 9999
+  );
 
-string testfen =
-    "position fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-// "position fen rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
-string testRegx = "123asd aA/";
-string ff = "part1, part2,part3";
-string ff1 = "gg";
+  ( regex_match( *fen, passOne ) ) ? cout << "-passOneSucess-"
+                                   : cout << "-failPassOne-";
+  ( regex_match( *fen, passTwo ) ) ? cout << "-passTwoSucess-"
+                                   : cout << "-failPassTwo-";
+  ( regex_match( *fen, passThree ) ) ? cout << "-passThreeSucess-"
+                                     : cout << "-failPassThree-";
+};
 
-int main() {
+// clang-format off
 
-  string fPos = "position";
-  string fFen = "fen";
-  size_t fenPos = testfen.find("fen");
-  // care must be taken for forward backslash https://www.regexpal.com/ checked
-  // from there replace [[:s:]] with /s for site and back
-  regex flora("(^)(position[[:s:]])?(fen[[:s:]])?(([a-zA-Z1-9]){1,8}\/){7}(([a-"
-              "zA-Z1-9]){1,8}){1}([[:s:]][w|b]{1}[[:s:]][K|-][Q|-][k|-][q|-][[:"
-              "s:]](([a-z]{1}[1-9]{1})|(-))[[:s:]][0-9][0-9]?[0-9]?[0-9]?[0-9]?"
-              "[[:s:]][0-9][0-9]?[0-9]?[0-9]?)?");
+ 
+/* regx replace
+\[\[:s:]] with \s and /with \/ --toSite
+and 
+\\s with [[:s:]] --backFromSite
+for, back and forth
+https://www.regexpal.com/
+*/
 
-  (regex_match(testfen, flora)) ? cout << " a mathc" : cout << "noMatch\n";
-  // cout << posPos;
-  if (fenPos != string::npos) {
-  }
-  // if()
-  getchar();
-}
 /*
-regex ss("((^|, )(part1|part2|part3))+$");
-regex ii("^(pp|gg)$");
-(regex_match(ff1, ii)) ? cout << " a mathc1" : cout << "noMatch1\n";
+passOne
+(^)(position\s)?(fen\s)?(([a-zA-Z1-9])+\/)+(([a-zA-Z1-9])+){1}(\s[a-zA-Z1-9]{1}\s([K|-]?[Q|-]?[k|-]?[q|-]?|-)\s(([a-z]{1}[1-9]{1})|(-))\s[0-9][0-9]?[0-9]?[0-9]?[0-9]?(\s[0-9][0-9]?[0-9]?[0-9]?)?)? 
 
-regex vFen("[[:digit:]]{3}(.*)\\s(aA/)");*/
+passTwo
+(^)(position\s)?(fen\s)?(([rnbqkbnrpRNBQKBNRP1-8]){1,8}/){7}(([rnbqkbnrpRNBQKBNRP1-8]){1,8}){1}(\s[b|w|B|W]{1}\s([K|-]?[Q|-]?[k|-]?[q|-]?|-)\s(([a-z]{1}[1-9]{1})|(-))(\s[0-9][0-9]?[0-9]?[0-9]?[0-9]?)?(\s[0-9][0-9]?[0-9]?[0-9]?)?)?                    
+    
+*/
+

@@ -1,8 +1,6 @@
 .vscode
-.vs
-ipch/
 #*
 *~
 build/
-/.vs/slnx.sqlite
+
 
