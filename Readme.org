@@ -1,1 +1,5 @@
 * perhaps implemeemt the pieces as haviing the property sliding(horizontal, vertical,diagonal) or jumper (look into firemax and stuff
+* TODO today board gen fix [-] 
+* create array boards 
+** 16x16
+** 0x88 mailbox

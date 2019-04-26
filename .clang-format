@@ -2,7 +2,6 @@
 BasedOnStyle: Google
 AlignConsecutiveDeclarations: 'true'
 AlignOperands: 'true'
-BreakBeforeBraces: Allman
 SpacesInParentheses: 'true'
 SpacesInSquareBrackets: 'true'
 AllowShortFunctionsOnASingleLine: All
