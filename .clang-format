@@ -2,11 +2,11 @@
 BasedOnStyle: Google
 AlignConsecutiveDeclarations: 'true'
 AlignOperands: 'true'
-SpacesInParentheses: 'true'
-SpacesInSquareBrackets: 'true'
+BreakBeforeBraces: Allman
+SpacesInSquareBrackets: 'false'
 AllowShortFunctionsOnASingleLine: All
-AllowShortIfStatementsOnASingleLine: 'true'
+AllowShortIfStatementsOnASingleLine: 'false'
 AllowShortLoopsOnASingleLine: 'true'
-IndentWidth: '2'
+IndentWidth: '3'
 AllowShortBlocksOnASingleLine: 'true'
 ...
