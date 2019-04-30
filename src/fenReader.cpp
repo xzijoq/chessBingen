@@ -1,9 +1,9 @@
 
 #include <data.h>
-
+#include <board.h>
 #include <chrono>
 #include <regex>  //to inititally validate fen
-#include <vector>
+
 
 /*
 S/O means selectively optional
@@ -25,8 +25,12 @@ llike taht)
 using namespace std;
 using namespace std::chrono;
 // char boardFen[280];
-array<char, boardSizeFen> boardFen;  // goes to ~81 for fideChess
-int                    corePartBoardFen = 0;
+//array<char, boardSizeFen> boardFen;  // goes to ~81 for fideChess
+
+#define boardSizeFen 280
+vector<char> boardFen(boardSizeFen);
+
+int                       corePartBoardFen = 0;
 
 // for details on there regex see comments at bottom
 /*passOne broad check, check only format

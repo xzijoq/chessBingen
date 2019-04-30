@@ -9,13 +9,14 @@ int  main()
 {
    //  cout << "\n" << sizeof(boardP) << "\n";
    boardsInit();
-   boardPDisplay();
-  // boardDisplay();
+   boardDisplay(boardP, bPCol);
+   boardDisplay(board, bCol);
 
    boardPFill();
    cout << "\n NewBoard \n";
-   boardPDisplay();
-  // boardDisplay();
+   boardDisplay(board, bCol);
+   boardDisplay(boardP, bPCol);
+   boardDisplay(boardIndexP, bCol);
 
    string t1 =
        "position fen rnbqkbnr/pppppppp/"
@@ -27,10 +28,10 @@ int  main()
        "1";
    string ww = "8/K7/8/8/8/8/3k4/8 w  - 0 1";
 
-   // chessFen(ww, true);
+  // chessFen(ww, true);
 
    // cout << "yoMama";
-   // poga();
+
    /*
    for (int i{0}; i <= corePartBoardFen; i++)
    {
