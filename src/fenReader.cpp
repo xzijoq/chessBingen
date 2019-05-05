@@ -1,11 +1,10 @@
-
 #include <data.h>
-#include <board.h>
 #include <chrono>
 #include <regex>  //to inititally validate fen
 
-
 /*
+MAX Board size supported by this fen reader 2048 2MB! (or update in fen)
+
 S/O means selectively optional
 1. reads fen and validate format :Done
         1.1 pass1 validation is very generous to accomodate varients
@@ -24,36 +23,53 @@ llike taht)
 
 using namespace std;
 using namespace std::chrono;
+enum fenParts
+{
+   core,
+   activePlayer,
+   Castling,
+   enPassant,
+   halfMoveClock,
+   fullMoveNumber,
+   WOW
+};
 // char boardFen[280];
-//array<char, boardSizeFen> boardFen;  // goes to ~81 for fideChess
+// array<char, boardSizeFen> boardFen;  // goes to ~81 for fideChess
 
-#define boardSizeFen 280
+/*2MB?!!!*/
+#define boardSizeFen 1024
 vector<char> boardFen(boardSizeFen);
 
-int                       corePartBoardFen = 0;
+int corePartBoardFen = 0;
 
-// for details on there regex see comments at bottom
-/*passOne broad check, check only format
+int  validateFenRegex(string fen);
+void stripFluffFen(string &fen);
+void fillData(int row, int col);
+void filldata();
+void chessFen(string fen, bool display);
+/*
 
+ for details on there regex see comments at bottom
+passOne broad check, check only format
  passTwo checks foe max 8 rows and 8 columns, chekcs for fide chess pieces only
  requires core fen though
 
  passThree Requires full fen exept the start engine thingie
  as specified in https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation
  rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+  is it from engine optional
+  #define mkStr_D(x) #x
+ #define concat_D(x, y) x##y
 */
-// is it from engine optional
 
-#define mkStr_D(x) #x
-#define concat_D(x, y) x##y
-#define errorFlag_D 123
+#pragma region regexStuff
 
 static const string posAFen = "(^)(position[[:s:]])?(fen[[:s:]])?";
-static const string coreFenS1 = "(([a-zA-Z1-9])+/)+";
+static const string coreFenS1 = "(([a-zA-Z0-9])+/)+";
 static const string coreFenS2 = "(([rnbqkbnrpRNBQKBNRP1-8]){1,8}/){7}";
 static const string coreFenS3 = "(([rnbqkbnrpRNBQKBNRP1-8]){1,8}/){7}";
 
-static const string coreFenEnd1 = "(([a-zA-Z1-9])+){1}";  // rest is optional
+static const string coreFenEnd1 = "(([a-zA-Z0-9])+){1}";  // rest is optional
 static const string coreFenEnd2 = "(([rnbqkbnrpRNBQKBNRP1-8]){1,8}){1}";  // S/O
 static const string coreFenEnd3 = "(([rnbqkbnrpRNBQKBNRP1-8]){1,8}){1}";
 
@@ -94,6 +110,8 @@ static const string passThreeS = posAFen + coreFenS3 + coreFenEnd3 +
                                  sideToMove3 + castleRights3 + enPasant3 +
                                  halfMoves3 + fullMoves3;
 
+#pragma endregion
+
 int validateFenRegex(string fen)
 {
    int flag{errorFlag_D};
@@ -101,34 +119,61 @@ int validateFenRegex(string fen)
    regex passOne(passOneS);
    regex passTwo(passTwoS);
    regex passThree(passThreeS);
-   if (regex_match(fen, passOne))
-   {
-      flag = 1;
-   }
-   if (regex_match(fen, passTwo))
-   {
-      flag = 2;
-   }
-   if (regex_match(fen, passThree))
-   {
-      flag = 3;
-   }
+   if (regex_match(fen, passOne)) { flag = 1; }
+   if (regex_match(fen, passTwo)) { flag = 2; }
+   if (regex_match(fen, passThree)) { flag = 3; }
    return flag;
 }
 void stripFluffFen(string &fen)
 {
    // removeing the fluff
    size_t posPos = fen.find("position ");  // length is 9 including space
-   if (posPos != string::npos && posPos == 0)
-   {
-      fen.erase(0, 9);
-   }
+   if (posPos != string::npos && posPos == 0) { fen.erase(0, 9); }
    size_t fenPos = fen.find("fen ");
-   if (fenPos != string::npos && (fenPos == 0))
-   {
-      fen.erase(0, 4);
-   }
+   if (fenPos != string::npos && (fenPos == 0)) { fen.erase(0, 4); }
    // removed the fluff
+}
+
+void fillData(int row, int col)
+{
+#if dynamicChess == 1
+
+   bRow = row;
+   bCol = col;
+   bSz = bRow * bCol;
+   bPRow = (bRow + maxJ * 2);
+   bPCol = (bCol + (maxJ - 1) * 2);
+   bPSz = bPRow * bPCol;
+   board.resize(bSz);
+   boardP.resize(bPSz);
+   boardIndexP.resize(bSz);
+
+   cout << "row: " << row << " col: " << col << endl;
+#endif
+
+#if dynamicChess == 0
+   // assert(row == bRow && col == bCol);
+   cout << "row: " << row << " col: " << col << endl;
+#endif
+   filldata();
+}
+
+void filldata()
+{
+   boardsInit();
+   int j{0};
+   for (auto i{0}; i < corePartBoardFen; i++)
+   {
+      // cout << boardFen[i];
+      if (boardFen[i] == '@' || boardFen[i] == '+') { continue; }
+      if (j < bRow * bCol)
+      {
+         board[j] = boardFen[i];
+         j++;
+      }
+   }
+
+   boardPFill();
 }
 
 void chessFen(string fen, bool display)
@@ -136,160 +181,151 @@ void chessFen(string fen, bool display)
    // timing
    auto start = high_resolution_clock::now();
 
-   /*If plan to branch non trivially from this function rememeber to reset cout
-   or diable the first line
-   if display is false disableing cout, is restored at the end*/
-   if (display == false)
-   {
-      std::cout.setstate(std::ios_base::failbit);
-   }
-
    /*for generating full board array from condenced fen*/
-   int flag{0}, rel{0};
+   int fenLocation{0}, rel{0}, row{0}, col{0};
    /*for counting the row and column of core fen and marking its end*/
-   int count1{0}, row{0}, col{0};
+   int count1{0};
+   /*for multiple digits in large boards*/
+   int d0{0}, d1{0}, d2{0};
+   //, row{0}, col{0};
 
    int regValidate = validateFenRegex(fen);
-   if (regValidate == 123)
+   if (regValidate == errorFlag_D)
    {
       cerr << "ThatAin'tNoValidFen, Please Kill yourself" << endl
            << "RegX validation failed";
-      if (display == false)
-      {
-         std::cout.clear();
-         return;
-      }
+      return;
    }
    else
    {
-      cout << "\nRegeX validation pass" << regValidate << " Sucess" << endl;
+      // cout << "\nRegeX validation pass" << regValidate << " Sucess" << endl;
    }
 
    // regex check fen
 
    stripFluffFen(fen);
 
-   cout << "\n";
+   // cout << "\n";
    // can be more elegent
    for (auto ch{0}; ch < fen.size(); ch++)
    {
       if (fen[ch] == ' ')
       {
+         if (fenLocation == core) { row++; }
          boardFen[rel] = '+';
-         flag++;
-         cout << "\n";
+         fenLocation++;
+         //         cout << "\n";
       }
-      if (flag == 0)
+      if (fenLocation == core)
       {
          if (fen[ch] != '/')
          {
             if (isdigit(fen[ch]))
             {
-               for (int i{0}; i < atoi(&fen[ch]); i++)
+               //cout << " " << fen[ch];
+               if (isdigit(fen[ch + 1]) && isdigit(fen[ch + 2]))
+               {
+                  //cout << " " << fen[ch+1];
+                  d0 = (fen[ch] - '0') * 100;
+                  d1 = (fen[ch + 1] - '0') * 10;
+                  d2 = d0 + d1 + (fen[ch + 2] - '0');
+                  ch += 2;
+               }
+               else if (isdigit(fen[ch + 1]))
+               {
+                  //cout << " " << fen[ch+1];
+                  d1 = (fen[ch] - '0') * 10;
+                  d2 = d1 + (fen[ch + 1] - '0');
+                  ch++;
+               }
+               else
+               {
+                  d2 = fen[ch] - '0';
+               }
+               for (int i{0}; i < d2; i++)
                {
                   boardFen[rel] = '-';
-                  cout << boardFen[rel];
+                  //                 cout << boardFen[rel];
                   rel++;
                   corePartBoardFen++;
                   count1++;
-                  if (row == 0)
-                  {
-                     col++;
-                  }
+                  if (row == 0) { col++; }
                }
                rel--;  // WowMan
             }
             else
             {
                boardFen[rel] = fen[ch];
-               cout << boardFen[rel];
+               // cout << boardFen[rel];
                corePartBoardFen++;
                count1++;
-               if (row == 0)
-               {
-                  col++;
-               }
+               /* counting no of coulumns in first row*/
+               if (row == 0) { col++; }
             }
          }
          else
-         {  // if(fen[ch]=='\'
+         {
             boardFen[rel] = '@';
-            cout << endl;
             corePartBoardFen++;
             row++;
             if (row > 0)
             {
-               if (col != count1)
-               {
-                  cout << "\ntHistypeoFmAdnesSiSnotSupPorted\n"
-                       << "Multiple Size Row\n";
-               }
+               if (col != count1) { cerr << "\nERROR:Col!=Col\n"; }
             }
             count1 = 0;
          }
       }
-      if (flag == 1)
+      if (fenLocation == activePlayer)
       {
-         if (fen[ch] != ' ')
-         {
-            cout << "side to move is: " << fen[ch];
-            boardFen[rel] = fen[ch];
-         }
+         if (fen[ch] != ' ') { boardFen[rel] = fen[ch]; }
          else
-         {
-            if (col != count1)
-            {
-               cout << "\ntHistypeoFmAdnesSiSnotSupPorted\n"
-                    << "Multiple Size Row\n";
-            }
+         {  // just got out of coreFen/check last col
+            if (col != count1) { cerr << "\nERROR:Col!=Col\n"; }
          }
       }
-      if (flag == 2)
+      if (fenLocation == Castling)
       {
-         if (fen[ch] != ' ')
-         {  // TODO: enter for -
-            cout << "castleAllowed: " << fen[ch] << " ";
-            boardFen[rel] = fen[ch];
-         }
+         if (fen[ch] != ' ') { boardFen[rel] = fen[ch]; }
          else if (fen[ch + 1] == ' ')
          {
-            cout << "CastelingSquare is Empty, resetting flag";
+            cerr << "\nERROR: INVALID FEN -CastelingSquare is Empty \n";
             rel++;
             boardFen[rel] = '-';
-            flag--;
+            fenLocation--;
          }
       }
-      if (flag == 3 && fen[ch] != ' ')
+      if (fenLocation == enPassant && fen[ch] != ' ')
+      { boardFen[rel] = fen[ch]; }
+      if (fenLocation == halfMoveClock && fen[ch] != ' ')
+      { boardFen[rel] = fen[ch]; }
+      if (fenLocation == fullMoveNumber && fen[ch] != ' ')
+      { boardFen[rel] = fen[ch]; }
+      if (fenLocation > 5)
       {
-         cout << "EnPasantSquare is: " << fen[ch] << endl;
-         boardFen[rel] = fen[ch];
-      }
-      if (flag == 4 && fen[ch] != ' ')
-      {
-         cout << "HalfMoveCounter: " << fen[ch] << endl;
-         boardFen[rel] = fen[ch];
-      }
-      if (flag == 5 && fen[ch] != ' ')
-      {
-         cout << "FullMoveCounter: " << fen[ch] << endl;
-         boardFen[rel] = fen[ch];
-      }
-      if (flag > 5)
-      {
-         cout << "You've GotTobeKiddingMe " << fen[ch] << endl;
-         boardFen[rel] = fen[ch];
+         cerr << "ERROR: You'veGotBeKiddingme";
+         boardFen[rel] = 'E';
       }
       rel++;
    }
 
-   cout << endl << rel << endl;
-   cout << "\nNumberOfRow: " << row;
-   cout << "\nNumberOfColumn: " << col;
-   std::cout.clear();
+   // cout << endl << rel << endl;
+   // cout << "\nNumberOfRow: " << row;
+   // cout << "\nNumberOfColumn: " << col;
 
    auto stop = high_resolution_clock::now();
    auto duration = duration_cast<microseconds>(stop - start);
-   cout << endl << "Time taken: " << duration.count() << " microSec\n";
+   if (display == true)
+   {
+      cout << "\nCore part of fen : \n";
+      for (int i{0}; i <= corePartBoardFen; i++)
+      {
+         cout << boardFen[i];
+         if (boardFen[i] == '@') { cout << "\n"; }
+      }
+      cout << endl << "Time taken: " << duration.count() << " microSec\n";
+   }
+
+   fillData(row, col);
 };
 
 // clang-format off

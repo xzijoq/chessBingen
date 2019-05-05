@@ -5,7 +5,7 @@ AlignOperands: 'true'
 BreakBeforeBraces: Allman
 SpacesInSquareBrackets: 'false'
 AllowShortFunctionsOnASingleLine: All
-AllowShortIfStatementsOnASingleLine: 'false'
+AllowShortIfStatementsOnASingleLine: 'true'
 AllowShortLoopsOnASingleLine: 'true'
 IndentWidth: '3'
 AllowShortBlocksOnASingleLine: 'true'

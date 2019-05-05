@@ -1,42 +1,75 @@
-#include <board.h>
-#include <data.h>
 #include <assert.h>
+
+#include <data.h>
 
 using namespace std;
 
-short int maxJ = 2;
-short int bRow = 8;
-short int bCol = 8;
-short int bSz = bRow * bCol;
-short int bPRow = (bRow + maxJ * 2);
-short int bPCol = (bCol + (maxJ - 1) * 2);
-short int bPSz = bPRow * bPCol;
-
-
-
-// array<short int, bSz>  board;
-vector<short int> boardP(bPSz);
-vector<short int> board(bSz);
-vector<short int> boardIndexP(bSz);
-
 void boardsInit()
 {
-   cout << boardP.size();
-   for (auto i{0}; i < boardP.size(); i++) { boardP[i] = -1; }
-   for (auto i{0}; i < board.size(); i++) { board[i] = i; }
+   // std::cout << boardP.size();
+   for (auto i{0}; i < boardP.size(); i++) { boardP[i] = '!'; }
+   for (auto i{0}; i < board.size(); i++) { board[i] = 'a'; }
 }
 
-void boardDisplay(vector<short int> boarD, short int offset, bool index)
+void boardDisplay(string boarS, bool index)
 {
-   cout << "\nBoard: \n ";
+   int offset{0}, flag{0};
+
+   size_t bS{0}, bDR{0};
+
+   bS = board.size();
+   offset = bCol;
+   bDR = bS / offset;
+
+   if (boarS == "board") { flag = 1; }
+   else if (boarS == "boardP")
+   {
+      bS = boardP.size();
+      offset = bPCol;
+      bDR = bS / offset;
+      flag = 2;
+   }
+   else if (boarS == "boardIndexP")
+   {
+      flag = 3;
+   }
+   else
+   {
+      flag = errorFlag_D;
+   }
+   auto j{bDR - 1};
+
+   std::cout << "\nBoard: \n";
+   // cout << "\n TT \n";
+
+   /*DisplayLoop*/
+   for (auto i{0}; i < bDR; i++)
+   {
+      if (j < 10) { cout << " "; }
+      cout << " " << j;
+
+      for (auto k{0}; k < offset; k++)
+      {
+         // cout << rank;
+         auto pos = j * offset + k;
+         if (flag == 1) { std::cout << "  " << board[pos]; }
+         if (flag == 2) { std::cout << "  " << boardP[pos]; }
+         if (flag == 3) { std::cout << "  " << boardIndexP[pos]; }
+         if (flag == errorFlag_D) { cerr << "ERROR: WrongBoard"; }
+      }
+      cout << endl;
+      j--;
+   }
+   cout << "   ";
+   for (auto i{0}; i < offset; i++) { cout << "  " << (char)(i + 'a'); }
+   cout << endl;
+
    if (index == true)
    {
-      for (auto i{0}; i < boarD.size(); i++)
+      cout << "\n IndexBoard:\n";
+      for (auto i{0}; i < bSz; i++)
       {
-         if (i < 10)
-         {
-            cout << "   " << i;
-         }
+         if (i < 10) { cout << "   " << i; }
          else if ((i < 100 && i >= 10))
          {
             cout << "  " << i;
@@ -45,38 +78,7 @@ void boardDisplay(vector<short int> boarD, short int offset, bool index)
          {
             cout << " " << i;
          }
-         if (((i + 1) % offset) == 0)
-         {
-            cout << "\n";
-         }
-      }
-      cout << endl;
-   }
-   for (auto i{0}; i < boarD.size(); i++)
-   {
-      if (boarD[i] < 10)
-      {
-         if (boarD[i] >= 0)
-         {
-            cout << "   " << boarD[i];
-         }
-         else if (boarD[i] < 0 && boarD[i] > -10)
-         {
-            cout << "  " << boarD[i];
-         }
-      }
-      else if (boarD[i] < 100 && boarD[i] >= 10)
-      {
-         cout << "  " << boarD[i];
-      }
-      else
-      {
-         cout << " " << boarD[i];
-      }
-      if (((i + 1) % offset) == 0)
-      {
-         cout << "\n ";
-         // cout << "-------------------------------\n";
+         if (((i + 1) % offset) == 0) { cout << "\n"; }
       }
    }
 }
@@ -97,10 +99,7 @@ void boardPFill(bool display)
       if (i >= topPad && i < botPad)
       {
          k++;
-         if (j > 0 || k > ((maxJ) + bCol))
-         {
-            boardP[i] = -1;
-         }
+         if (j > 0 || k > ((maxJ) + bCol)) { boardP[i] = '!'; }
          else
          {
             boardP[i] = board[boardData];
