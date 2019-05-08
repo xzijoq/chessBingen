@@ -1,68 +1,151 @@
 #include "data.h"
 
-s64 moveT{0};
+
+u64 pkdMove{0};
 class piece
 {
    // bool
 };
 
 array<u64, 120> knightMove{};
+s64             moveT{0};
+void genMove(s64 *pieceM, int pos, int color)
+{
+   if (color != white && color != black) { cerr << "\nERROR:ColorMovegen\n"; }
+   int xcolor{99};
+   (color == white) ? xcolor = black : xcolor = white;
 
+   if (pieceM[0] == jumperP)
+   {
+      for (auto j{1}; pieceM[j] != 0; j++)
+      {
+         moveT = pos + pieceM[j];
+         if (pBoard[moveT] == invalidSquare) { continue; }
+         if (pBoard[moveT] != emptySquare && pBoard[moveT] != moveDebug)
+         {
+            // pBoard[moveT] = captureDebug;
+            ;
+         }
+         else
+         {
+            pBoard[moveT] = moveDebug;
+         }
+      }
+   }
+   else if (pieceM[0] == sliderP)
+   {
+      for (auto j{1}; pieceM[j] != 0; j++)
+      {
+         for (s64 i{1}; i < 256; i++)
+         {
+            moveT = pos + (pieceM[j] * i);
 
+            if (pBoard[moveT] == invalidSquare) { break; }
+            if (pBoard[moveT] != emptySquare && pBoard[moveT] != moveDebug)
+            {
+            
+               // pBoard[moveT] = captureDebug;
+               break;
+            }
+            else
+            {
+               pBoard[moveT] = moveDebug;
+            }
+         }
+      }
+   }
+   else
+   {
+      cerr << "ERROR:UNDEFINED PIECE TYPE genMove";
+   }
+}
 
-void inline moveGen(int pos, char piece)
+//for compound pieces
+void genMove(s64 **pieceM, int pos, int color)
+{
+   if ((s64)(pieceM[0]) == compoundP)
+   {
+      for (auto j{1}; pieceM[j] != nullptr; j++)
+      {
+         genMove(pieceM[j], pos, color);
+         ;
+      }
+   }
+   else
+   {
+      cerr << "ERROR:QueenMoveGen";
+   }
+}
+
+void inline moveGena(int pos, char piece)
 { /*if no piece is specified it'll search through the board to find it*/
    // if (pos == 72) { cout << "wow"; }
    if (pos == 72) { cout << pBoard[pos] << endl; }
    if (piece == noPiece) { piece = pBoard[pos]; }
    if (piece == 'p') { pawnMGen(pos, black); }
    if (piece == 'P') { pawnMGen(pos, white); }
-   if (piece == 'r') { slidingMoveGen(rookM, pos, black); }
-   if (piece == 'R') { slidingMoveGen(rookM, pos, white); }
-  // if (piece == 'b' || piece == 'B') { bishopMGen(pos); }
-   //if (piece == 'n' || piece == 'N') { knightMGen(pos); }
-   //if (piece == 'q' || piece == 'Q') { queenMGen(pos); }
-   //if (piece == 'k' || piece == 'K') { kingMGen(pos); }
-   if (piece == emptySquare) {}  // cout << "\nWARNING: GenEmptySqMv\n"; }
-   if (piece == invalidSquare) { cerr << "\nERROR: GenINVALIDSqMv\n"; }
+   if (piece == 'r') { genMove(rookM, pos, black); }
+   if (piece == 'R') { genMove(rookM, pos, white); }
+   if (piece == 'b') { genMove(bishopM, pos, black); }
+   if (piece == 'B') { genMove(bishopM, pos, white); }
+   if (piece == 'n') { genMove(knightM, pos, black); }
+   if (piece == 'N') { genMove(knightM, pos, white); }
+   if (piece == 'q') { genMove(queenM, pos, black); }
+   if (piece == 'Q') { genMove(queenM, pos, white); }
+   if (piece == 'k') { genMove(kingM, pos, black); }
+   if (piece == 'K') { genMove(kingM, pos, white); }
+   if (piece == emptySquare) {}    // cout << "\nWARNING: GenEmptySqMv\n"; }
+   if (piece == invalidSquare) {}  // cerr << "\nERROR: GenINVALIDSqMv\n"; }
 }
 
 void inline pawnMGen(int pos, bool color)
 {
-   int cRank = (pos / pBCol) - maxJ + 1;
+   auto cRank = (pos / pBCol) - maxJ + 1;
 
-   bool canPromote{false},startPos{true};
+   s64 mC{0};
+
+   bool canPromote{false}, startPos{false};
    if (cRank > maxJ + bRow) { cerr << "ERROR: WHere exactly is your Pawn"; }
-  // s64 moveT{'{'};
 
    if (color == white)
    {
-      if (cRank == bRow - 1) { canPromote = 1; }
+      if (cRank == bRow - 1) { canPromote = true; }
+      if (cRank == 2) { startPos = true; }
    }
    else
    {
-      // _Ty a;
-      if (cRank == 2) { canPromote = 1; }
+      if (cRank == 2) { canPromote = true; }
+      if (cRank == bRow - 1) { startPos = true; }
    }
-   for (auto j{0}; j < wPawnM.size(); j++)
+   for (auto j{0}; wPawnM[j] != 0; j++)
    {
-      if (color == white) { moveT = pos + wPawnM[j]; }
-      if (color == black) { moveT = pos + bPawnM[j]; }
+      if (color == white) { mC = wPawnM[j]; }
+      if (color == black) { mC = bPawnM[j]; }
+      moveT = pos + mC;
 
       if (j == 0)
       {
          if (pBoard[moveT] == invalidSquare)
          {
-            cerr << "ERROR: WHere exactly is your Pawn" << moveT;
+            cerr << "ERROR:Pawn" << moveT;
             continue;
          }
          if (pBoard[moveT] != emptySquare && pBoard[moveT] != moveDebug)
          { continue; }
          else
          {
-            if (canPromote == 1) { pBoard[moveT] = '{'; }
+            if (canPromote == 1) { pBoard[moveT] = '.'; }
             else
             {
+               if (startPos == true)
+               {
+                  if (pBoard[moveT + mC] == emptySquare)
+                  {
+                     pBoard[moveT+mC] = moveDebug;
+                     // gen double move
+                     // set enPasant
+                  }
+               }
                pBoard[moveT] = moveDebug;
             }
          }
@@ -70,25 +153,17 @@ void inline pawnMGen(int pos, bool color)
       if (j > 0)
       {
          if (pBoard[moveT] == invalidSquare) { continue; }
-         if (pBoard[moveT] != emptySquare && pBoard[moveT] != moveDebug)
+         if ((pBoard[moveT] != emptySquare && pBoard[moveT] != moveDebug) ||
+             pBoard[moveT] == 'e')
          {
-            if (canPromote == 1) { pBoard[moveT] = '}'; }
+            if (canPromote == 1) { pBoard[moveT] = '.'; }
             else
             {
-               pBoard[moveT] = captureDebug;
+               // pBoard[moveT] = captureDebug;
             }
          }
       }
    }
-}
-void inline queenMGen(int pos,int color)
-{
-   slidingMoveGen(rookM, pos, white);
-   slidingMoveGen(bishopM, pos, white);
-	
-   
-   // rookMGen(pos);
-   //bishopMGen(pos);
 }
 
 

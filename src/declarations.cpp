@@ -25,17 +25,22 @@ array<short int, bSz> boardIndexP;
 
 /*---------Pieces Data----------*/
 
-array<s64, 8> knightM{
+
+s64 knightM[]{jumperP,
     (dN + dN + dE), (dN + dN + dW),  //
     (dS + dS + dE), (dS + dS + dW),  //
     (dE + dE + dN), (dE + dE + dS),  //
-    (dW + dW + dN), (dW + dW + dS)   //
+    (dW + dW + dN), (dW + dW + dS),  //
+	0
 };
-array<s64, 4> bishopM{dNE, dNW, dSE, dSW};
-array<s64, 4> rookM{dN, dS, dE, dW};
-array<s64, 8> kingM{dN, dS, dE, dW, dNE, dNW, dSE, dSW};
-array<s64, 3> wPawnM{dN, dNE, dNW};
-array<s64, 3> bPawnM{dS, dSE, dSW};
+s64 bishopM[]{sliderP,dNE, dNW, dSE, dSW,0};
+s64 rookM[]{sliderP, dN, dS, dE, dW, 0};
+s64 kingM[]{jumperP,dN, dS, dE, dW, dNE, dNW, dSE, dSW, 0};
+
+s64 *queenM[]{(s64*)compoundP,rookM,bishopM,nullptr};
+
+s64 wPawnM[]{dN, dNE, dNW, 0};
+s64 bPawnM[]{dS, dSE, dSW,0};
 
 
 /*---------Pieces Data----------*/

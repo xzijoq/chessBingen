@@ -110,3 +110,14 @@ void boardPFill(bool display)
       }
    }
 }
+
+void boardFill()
+{
+   int j{0};
+   for (auto i : boardIndexP)
+   {
+      // cout << i << " ";
+      board[j] = pBoard[i];
+      j++;
+   }
+}

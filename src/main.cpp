@@ -5,26 +5,47 @@ MaxJumperSize 4, in a 12 x12 requires a padding of
 #include <data.h>
 #include <bitset>
 #include <cinttypes>
-//array<char, pBSz> pBoardC;
 
-using namespace std;
-enum wtf
-{
-   fg,
-   gg,
-   qe,
-   hg
-};
 
 void chessFen(string fen, bool display = false);
 int  main()
 {
    boardsInit();
-   string emptyBo = "12/12/8r3/12/8n3/12/12/12/12/12/12/12 w K e2 1";
-   string ranF = "b1kb4/2B2Bp1/1P4P1/P1K2N2/8/1N1r1ppp/1RPp2n1/qr6 w - - 0 1";
-   string ranF1 = "8/Rp2pp2/3np1Pb/2K1Q3/1P1P2P1/P1BPpr1P/5qn1/3k4 w - - 0 1";
-   string fen3 = "8/8/8/3k4/8/8/8/8";
-   //  chessFen(ranF);
+
+   string star = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+   chessFen(star);
+   // genMove()
+
+
+   getchar();
+}
+/*
+DEBUG tests
+     cout << pkdMove << endl;
+   // These should be u64 or imba bugs will show up
+   u64 fr{0x3ff}, to{0x3ff}, cap = 0xff, prom = 0xff, mVal{0x7fffff};
+   // setting any one to zero should set exactly the no of size bits to zero
+   pkdMove = (fr) | (to << 10) | (cap << 20) | (prom << 28) | (mVal << 40);
+
+   // to test the value of flag & it with the fuking bit
+   pkdMove |= epFg;
+   pkdMove |= psFg;
+   pkdMove |= csFg;
+   pkdMove |= cpFg;
+   pkdMove |= lastBit;
+
+   cout << " " << frSq(pkdMove) << " " << toSq(pkdMove) << " " << capP(pkdMove)
+        << " " << prmD(pkdMove) << " "
+        << " " << mVal(pkdMove) << endl
+        << "flag: " << (pkdMove & cpFg) << endl;
+
+   cout << endl << bitset<64>(pkdMove);
+
+
+*/
+
+/*
+Bogus:
    // boardDisplay("pBoard");
    // boardDisplay("board");
  //  cout << lol[1];
@@ -32,31 +53,21 @@ int  main()
 
    for (auto i{0}; i < pBSz; i++)
    {
-      // if (pBoard[i] != invalidSquare) { moveGen(i); }
-      // if (pBoardC[i] == 'p' || pBoardC[i] == 'P') { moveGen(i); }
-      //     if (pBoard[i] == 'r' || pBoard[i] == 'R') { moveGen(i); }
+      // if (pBoard[i] != invalidSquare) { genMove(i); }
+      // if (pBoardC[i] == 'p' || pBoardC[i] == 'P') { genMove(i); }
+         //  if (pBoard[i] == 'r' || pBoard[i] == 'R') { genMove(queenM,i,2); }
+      moveGena(i);
    }
-
-   // boardDisplay("pBoard");
-
-   getchar();
-}
-/*
 
    /*
         u64 wow{0};
    wow = dN<<9;  //| (abs(dS)<<8) | (1<<19);
         cout << bitset<64>(wow) << endl;
-       
-
-
+      
         cout << bitset<64>(wow>>9);
-
-
    int cow= (~(wow >> 9))+1;
         cout << " "<<cow;
-                
-
+                
   string t1 =
        "position fen rnbqkbnr/pppppppp/"
        "8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 "
@@ -86,4 +97,4 @@ int  main()
    // boardDisplay(boardIndexP, bCol);
 
    // cout << "yoMama";
-   */
+  */
