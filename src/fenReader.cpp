@@ -40,7 +40,8 @@ enum fenParts
 #define boardSizeFen 1024
 vector<char> boardFen(boardSizeFen);
 
-int corePartBoardFen = 0;
+int corePartBoardFen = 0, row{0}, col{0};
+
 
 int  validateFenRegex(string fen);
 void stripFluffFen(string &fen);
@@ -141,19 +142,21 @@ void fillData(int row, int col)
    bRow = row;
    bCol = col;
    bSz = bRow * bCol;
-   bPRow = (bRow + maxJ * 2);
-   bPCol = (bCol + (maxJ - 1) * 2);
-   bPSz = bPRow * bPCol;
+   pBRow = (bRow + maxJ * 2);
+   pBCol = (bCol + (maxJ - 1) * 2);
+   pBSz = pBRow * pBCol;
    board.resize(bSz);
-   boardP.resize(bPSz);
+   pBoard.resize(pBSz);
    boardIndexP.resize(bSz);
 
-   cout << "row: " << row << " col: " << col << endl;
+   //  cout << "row: " << row << " col: " << col << endl;
 #endif
 
 #if dynamicChess == 0
    // assert(row == bRow && col == bCol);
-   cout << "row: " << row << " col: " << col << endl;
+   if ((row != bRow) && (col != bCol))
+   { cerr << "ERROR:  InvalidBoardSize InvalidFen"; }
+   // cout << "row: " << row << " col: " << col << endl;
 #endif
    filldata();
 }
@@ -161,16 +164,32 @@ void fillData(int row, int col)
 void filldata()
 {
    boardsInit();
-   int j{0};
+   int  j{0};
+   int  offset = col +1;//+1 for @ or +
+   int  bDR = corePartBoardFen / offset;
+   auto l{bDR - 1};
+   for (auto i{0}; i < bDR; i++)
+   {
+      for (auto k{0}; k < offset; k++)
+      {
+         auto pos = l * offset + k;
+      //   cout << "   " << boardFen[pos];
+         if (boardFen[pos] != '@' && boardFen[pos] != '+')
+         {
+            if (j < bRow * bCol)
+            {
+               board[j] = boardFen[pos];
+               j++;
+            }
+         }
+      }
+      l--;
+     // cout << endl;
+   }
+
    for (auto i{0}; i < corePartBoardFen; i++)
    {
       // cout << boardFen[i];
-      if (boardFen[i] == '@' || boardFen[i] == '+') { continue; }
-      if (j < bRow * bCol)
-      {
-         board[j] = boardFen[i];
-         j++;
-      }
    }
 
    boardPFill();
@@ -182,7 +201,7 @@ void chessFen(string fen, bool display)
    auto start = high_resolution_clock::now();
 
    /*for generating full board array from condenced fen*/
-   int fenLocation{0}, rel{0}, row{0}, col{0};
+   int fenLocation{0}, rel{0};
    /*for counting the row and column of core fen and marking its end*/
    int count1{0};
    /*for multiple digits in large boards*/
@@ -209,23 +228,16 @@ void chessFen(string fen, bool display)
    // can be more elegent
    for (auto ch{0}; ch < fen.size(); ch++)
    {
-      if (fen[ch] == ' ')
-      {
-         if (fenLocation == core) { row++; }
-         boardFen[rel] = '+';
-         fenLocation++;
-         //         cout << "\n";
-      }
       if (fenLocation == core)
       {
-         if (fen[ch] != '/')
+         if (fen[ch] != '/' && fen[ch] != ' ')
          {
             if (isdigit(fen[ch]))
             {
-               //cout << " " << fen[ch];
+               // cout << " " << fen[ch];
                if (isdigit(fen[ch + 1]) && isdigit(fen[ch + 2]))
                {
-                  //cout << " " << fen[ch+1];
+                  // cout << " " << fen[ch+1];
                   d0 = (fen[ch] - '0') * 100;
                   d1 = (fen[ch + 1] - '0') * 10;
                   d2 = d0 + d1 + (fen[ch + 2] - '0');
@@ -233,7 +245,7 @@ void chessFen(string fen, bool display)
                }
                else if (isdigit(fen[ch + 1]))
                {
-                  //cout << " " << fen[ch+1];
+                  // cout << " " << fen[ch+1];
                   d1 = (fen[ch] - '0') * 10;
                   d2 = d1 + (fen[ch + 1] - '0');
                   ch++;
@@ -275,13 +287,16 @@ void chessFen(string fen, bool display)
             count1 = 0;
          }
       }
+      if (fen[ch] == ' ')
+      {
+         boardFen[rel] = '+';
+         fenLocation++;
+         //         cout << "\n";
+      }
+
       if (fenLocation == activePlayer)
       {
          if (fen[ch] != ' ') { boardFen[rel] = fen[ch]; }
-         else
-         {  // just got out of coreFen/check last col
-            if (col != count1) { cerr << "\nERROR:Col!=Col\n"; }
-         }
       }
       if (fenLocation == Castling)
       {
@@ -305,6 +320,7 @@ void chessFen(string fen, bool display)
          cerr << "ERROR: You'veGotBeKiddingme";
          boardFen[rel] = 'E';
       }
+
       rel++;
    }
 
@@ -317,7 +333,7 @@ void chessFen(string fen, bool display)
    if (display == true)
    {
       cout << "\nCore part of fen : \n";
-      for (int i{0}; i <= corePartBoardFen; i++)
+      for (int i{0}; i < corePartBoardFen; i++)
       {
          cout << boardFen[i];
          if (boardFen[i] == '@') { cout << "\n"; }

@@ -8,41 +8,34 @@ short int maxJ = 2;
 short int         bRow = 8;
 short int         bCol = 8;
 short int         bSz = bRow * bCol;
-short int         bPRow = (bRow + maxJ * 2);
-short int         bPCol = (bCol + (maxJ - 1) * 2);
-short int         bPSz = bPRow * bPCol;
-vector<char>      boardP(bPSz);      // boardPadded
+short int         pBRow = (bRow + maxJ * 2);
+short int         pBCol = (bCol + (maxJ - 1) * 2);
+short int         pBSz = pBRow * pBCol;
+vector<char>      pBoard(pBSz);      // boardPadded
 vector<char>      board(bSz);        // board
-vector<short int> boardIndexP(bSz);  // index of board data in boardP
+vector<short int> boardIndexP(bSz);  // index of board data in pBoard
 
 #elif dynamicChess == 0
 
-array<char, bPSz>     boardP;
+array<char, pBSz>     pBoard;
 array<char, bSz>      board;
 array<short int, bSz> boardIndexP;
 #endif
 /*----------------BoardData-----------*/
 
 /*---------Pieces Data----------*/
-enum pW /*piecesWhite*/
-{
-   npW,
-   wp,
-   wr,
-   wn,
-   wb,
-   wq,
-   wk
+
+array<s64, 8> knightM{
+    (dN + dN + dE), (dN + dN + dW),  //
+    (dS + dS + dE), (dS + dS + dW),  //
+    (dE + dE + dN), (dE + dE + dS),  //
+    (dW + dW + dN), (dW + dW + dS)   //
 };
-enum pB /*piecesBlack*/
-{
-   npB,
-   bp,
-   br,
-   bn,
-   bb,
-   bq,
-   bk
-};
+array<s64, 4> bishopM{dNE, dNW, dSE, dSW};
+array<s64, 4> rookM{dN, dS, dE, dW};
+array<s64, 8> kingM{dN, dS, dE, dW, dNE, dNW, dSE, dSW};
+array<s64, 3> wPawnM{dN, dNE, dNW};
+array<s64, 3> bPawnM{dS, dSE, dSW};
+
 
 /*---------Pieces Data----------*/
