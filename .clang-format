@@ -6,6 +6,7 @@ BreakBeforeBraces: Allman
 SpacesInSquareBrackets: 'false'
 AllowShortFunctionsOnASingleLine: All
 AllowShortIfStatementsOnASingleLine: 'true'
+AllowShortCaseLabelsOnASingleLine: 'true'
 AllowShortLoopsOnASingleLine: 'true'
 IndentWidth: '3'
 AllowShortBlocksOnASingleLine: 'true'

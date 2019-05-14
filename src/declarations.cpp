@@ -3,44 +3,61 @@
 /*----------------BoardData-----------*/
 
 #if dynamicChess == 1
-short int maxJ = 2;
+u64 maxJ = 2;
 /*These defaults are updated by fen reader*/
-short int         bRow = 8;
-short int         bCol = 8;
-short int         bSz = bRow * bCol;
-short int         pBRow = (bRow + maxJ * 2);
-short int         pBCol = (bCol + (maxJ - 1) * 2);
-short int         pBSz = pBRow * pBCol;
-vector<char>      pBoard(pBSz);      // boardPadded
-vector<char>      board(bSz);        // board
-vector<short int> boardIndexP(bSz);  // index of board data in pBoard
+u64         bRow = 8;
+u64         bCol = 8;
+u64         bSz = bRow * bCol;
+u64         pBRow = (bRow + maxJ * 2);
+u64         pBCol = (bCol + (maxJ - 1) * 2);
+u64         pBSz = pBRow * pBCol;
+vector<u64>      pBoard(pBSz);      // boardPadded
+vector<u64>      board(bSz);        // board
+vector<u64> boardIndexP(bSz);  // index of board data in pBoard
 
 #elif dynamicChess == 0
 
-array<char, pBSz>     pBoard;
-array<char, bSz>      board;
-array<short int, bSz> boardIndexP;
+array<u64, pBSz>     pBoard;
+array<u64, bSz>      board;
+array<u64, bSz> boardIndexP;
+//array<u64, pBSz>     atIndex;
 #endif
+
+vector<u64> atIndex(pBSz);
+
 /*----------------BoardData-----------*/
 
 /*---------Pieces Data----------*/
 
+array<u8, 24> dPce{
+    "."
+	"PNBRQK"
+	"pnbrqk"
+    "xxxxxx"
+	"xxxx"};
 
 s64 knightM[]{jumperP,
-    (dN + dN + dE), (dN + dN + dW),  //
-    (dS + dS + dE), (dS + dS + dW),  //
-    (dE + dE + dN), (dE + dE + dS),  //
-    (dW + dW + dN), (dW + dW + dS),  //
-	0
-};
-s64 bishopM[]{sliderP,dNE, dNW, dSE, dSW,0};
+              (dN + dN + dE),
+              (dN + dN + dW),  //
+              (dS + dS + dE),
+              (dS + dS + dW),  //
+              (dE + dE + dN),
+              (dE + dE + dS),  //
+              (dW + dW + dN),
+              (dW + dW + dS),  //
+              0};
+s64 bishopM[]{sliderP, dNE, dNW, dSE, dSW, 0};
 s64 rookM[]{sliderP, dN, dS, dE, dW, 0};
-s64 kingM[]{jumperP,dN, dS, dE, dW, dNE, dNW, dSE, dSW, 0};
+s64 kingM[]{jumperP, dN, dS, dE, dW, dNE, dNW, dSE, dSW, 0};
 
-s64 *queenM[]{(s64*)compoundP,rookM,bishopM,nullptr};
+s64 *queenM[]{(s64 *)compoundP, rookM, bishopM, nullptr};
 
 s64 wPawnM[]{dN, dNE, dNW, 0};
-s64 bPawnM[]{dS, dSE, dSW,0};
+s64 bPawnM[]{dS, dSE, dSW, 0};
 
-
+int          activeSide{3};
+unsigned int castle{0};
+int          ep{invalidPiece};
+int          halfMc{0};
+int          fullMc{0};
 /*---------Pieces Data----------*/

@@ -1,4 +1,5 @@
 #include <data.h>
+#include <bitset>
 #include <chrono>
 #include <regex>  //to inititally validate fen
 
@@ -23,31 +24,36 @@ llike taht)
 
 using namespace std;
 using namespace std::chrono;
-enum fenParts
-{
+static enum fenParts {
    core,
-   activePlayer,
+   activePlayerFen,
    Castling,
    enPassant,
    halfMoveClock,
    fullMoveNumber,
    WOW
 };
-// char boardFen[280];
-// array<char, boardSizeFen> boardFen;  // goes to ~81 for fideChess
 
 /*2MB?!!!*/
 #define boardSizeFen 1024
-vector<char> boardFen(boardSizeFen);
+/*Prefer to keep it u8 rather than u64*/
+static vector<u64> boardFen(boardSizeFen);
 
-int corePartBoardFen = 0, row{0}, col{0};
+static int          corePartBoardFen = 0, row{0}, col{0};
+static int          fenEpCounter{0}, hmc{0}, fmc{0}, kingCount{0};
+static array<u8, 3> epSFen{'a', 0, 1};
+static unsigned int castleFen{0};
+static int          halfMcFen{-1};
+static int          fullMcFen{-1};
+static int          activeSideFen{3};
+unsigned char       fenSpace = invalidPiece;
 
+void        chessFen(string fen, bool display);
+static int  validateFenRegex(string fen);
+static void stripFluffFen(string &fen);
+static void fillData(int row, int col);
+static void filldata();
 
-int  validateFenRegex(string fen);
-void stripFluffFen(string &fen);
-void fillData(int row, int col);
-void filldata();
-void chessFen(string fen, bool display);
 /*
 
  for details on there regex see comments at bottom
@@ -84,7 +90,7 @@ static const string castleRights1 = "[[:s:]]([K|-]?[Q|-]?[k|-]?[q|-]?|-)";
 static const string castleRights2 = "[[:s:]]([K|-]?[Q|-]?[k|-]?[q|-]?|-)";
 static const string castleRights3 = "[[:s:]]([K|-]?[Q|-]?[k|-]?[q|-]?|-)";
 
-// TODO restrict more
+// TODO restrict more ([1-9]{1}[1-9]{0,1}) --for larger boards
 static const string enPasant1 = "([[:s:]](([a-z]{1}[1-9]{1})|(-)))?";
 static const string enPasant2 = "[[:s:]](([a-z]{1}[1-9]{1})|(-))";
 static const string enPasant3 = "[[:s:]](([a-z]{1}[1-9]{1})|(-))";
@@ -138,7 +144,7 @@ void stripFluffFen(string &fen)
 void fillData(int row, int col)
 {
 #if dynamicChess == 1
-
+   // cout << "row: " << row << " cpl: " << col << endl;
    bRow = row;
    bCol = col;
    bSz = bRow * bCol;
@@ -165,16 +171,19 @@ void filldata()
 {
    boardsInit();
    int  j{0};
-   int  offset = col +1;//+1 for @ or +
+   int  offset = col + 1;  //+1 for @ or +
    int  bDR = corePartBoardFen / offset;
    auto l{bDR - 1};
+   /*Fen Starts From last rank*/
    for (auto i{0}; i < bDR; i++)
    {
       for (auto k{0}; k < offset; k++)
       {
          auto pos = l * offset + k;
-      //   cout << "   " << boardFen[pos];
-         if (boardFen[pos] != '@' && boardFen[pos] != '+')
+         // cout << pos;
+         //   cout << "   " << boardFen[pos];
+
+         if (boardFen[pos] != fenRowBreak && boardFen[pos] != fenSpace)
          {
             if (j < bRow * bCol)
             {
@@ -184,15 +193,19 @@ void filldata()
          }
       }
       l--;
-     // cout << endl;
+      // cout << endl;
    }
 
-   for (auto i{0}; i < corePartBoardFen; i++)
-   {
-      // cout << boardFen[i];
-   }
-
+   if (kingCount != 3) { cerr << "FenError:KingCount"; }
    boardPFill();
+   activeSide = activeSideFen;
+   castle = castleFen;
+  // cout << endl << (char)(epSFen[0]) << " r " << (int)epSFen[1];
+  // cout << endl << ep << endl;
+   ep = getPIndex(epSFen[0], epSFen[1]);
+  // cout << "\n ep " << ep;
+   halfMc = halfMcFen;
+   fullMc = fullMcFen;
 }
 
 void chessFen(string fen, bool display)
@@ -203,10 +216,7 @@ void chessFen(string fen, bool display)
    /*for generating full board array from condenced fen*/
    int fenLocation{0}, rel{0};
    /*for counting the row and column of core fen and marking its end*/
-   int count1{0};
-   /*for multiple digits in large boards*/
-   int d0{0}, d1{0}, d2{0};
-   //, row{0}, col{0};
+   int count1{0}, d2{0};
 
    int regValidate = validateFenRegex(fen);
    if (regValidate == errorFlag_D)
@@ -220,11 +230,8 @@ void chessFen(string fen, bool display)
       // cout << "\nRegeX validation pass" << regValidate << " Sucess" << endl;
    }
 
-   // regex check fen
-
    stripFluffFen(fen);
 
-   // cout << "\n";
    // can be more elegent
    for (auto ch{0}; ch < fen.size(); ch++)
    {
@@ -232,31 +239,15 @@ void chessFen(string fen, bool display)
       {
          if (fen[ch] != '/' && fen[ch] != ' ')
          {
-            if (isdigit(fen[ch]))
+            if (isdigit(fen[ch])) /*could use stoi*/
             {
-               // cout << " " << fen[ch];
-               if (isdigit(fen[ch + 1]) && isdigit(fen[ch + 2]))
-               {
-                  // cout << " " << fen[ch+1];
-                  d0 = (fen[ch] - '0') * 100;
-                  d1 = (fen[ch + 1] - '0') * 10;
-                  d2 = d0 + d1 + (fen[ch + 2] - '0');
-                  ch += 2;
-               }
-               else if (isdigit(fen[ch + 1]))
-               {
-                  // cout << " " << fen[ch+1];
-                  d1 = (fen[ch] - '0') * 10;
-                  d2 = d1 + (fen[ch + 1] - '0');
-                  ch++;
-               }
-               else
-               {
-                  d2 = fen[ch] - '0';
-               }
+               d2 = stoi(&fen[ch]);
+
+               ch += (((d2 <= 1) ? 1 : log10(d2) + 1) - 1);
+
                for (int i{0}; i < d2; i++)
                {
-                  boardFen[rel] = '-';
+                  boardFen[rel] = noPiece;
                   //                 cout << boardFen[rel];
                   rel++;
                   corePartBoardFen++;
@@ -267,7 +258,75 @@ void chessFen(string fen, bool display)
             }
             else
             {
-               boardFen[rel] = fen[ch];
+               switch (fen[ch])
+               {
+                  case 'P':
+                  {
+                     boardFen[rel] = wP;
+                     break;
+                  }
+                  case 'N':
+                  {
+                     boardFen[rel] = wN;
+                     break;
+                  }
+                  case 'B':
+                  {
+                     boardFen[rel] = wB;
+                     break;
+                  }
+                  case 'R':
+                  {
+                     boardFen[rel] = wR;
+                     break;
+                  }
+                  case 'Q':
+                  {
+                     boardFen[rel] = wQ;
+                     break;
+                  }
+                  case 'K':
+                  {
+                     boardFen[rel] = wK;
+                     kingCount |= (0x1);
+                     break;
+                  }
+
+                  case 'p':
+                  {
+                     boardFen[rel] = bP;
+                     break;
+                  }
+                  case 'n':
+                  {
+                     boardFen[rel] = bN;
+                     break;
+                  }
+                  case 'b':
+                  {
+                     boardFen[rel] = bB;
+                     break;
+                  }
+                  case 'r':
+                  {
+                     boardFen[rel] = bR;
+                     break;
+                  }
+                  case 'q':
+                  {
+                     boardFen[rel] = bQ;
+                     break;
+                  }
+                  case 'k':
+                  {
+                     boardFen[rel] = bK;
+                     kingCount |= (0x1) << 1;
+                     break;
+                  }
+                  default: { boardFen[rel] = fen[ch];
+                  }
+               }
+
                // cout << boardFen[rel];
                corePartBoardFen++;
                count1++;
@@ -277,7 +336,7 @@ void chessFen(string fen, bool display)
          }
          else
          {
-            boardFen[rel] = '@';
+            boardFen[rel] = fenRowBreak;
             corePartBoardFen++;
             row++;
             if (row > 0)
@@ -289,18 +348,56 @@ void chessFen(string fen, bool display)
       }
       if (fen[ch] == ' ')
       {
-         boardFen[rel] = '+';
+         boardFen[rel] = fenSpace;
          fenLocation++;
          //         cout << "\n";
       }
 
-      if (fenLocation == activePlayer)
+      if (fenLocation == activePlayerFen)
       {
-         if (fen[ch] != ' ') { boardFen[rel] = fen[ch]; }
+         if (fen[ch] != ' ')
+         {
+            boardFen[rel] = fen[ch];
+            if (fen[ch] == 'w' || fen[ch] == 'W') { activeSideFen = white; }
+            else
+            {
+               activeSideFen = black;
+            }
+         }
       }
       if (fenLocation == Castling)
       {
-         if (fen[ch] != ' ') { boardFen[rel] = fen[ch]; }
+         if (fen[ch] != ' ')
+         {
+            boardFen[rel] = fen[ch];
+            switch (fen[ch])
+            {
+               case 'K':
+               {
+                  castleFen |= 0x1;
+                  break;
+               }
+               case 'Q':
+               {
+                  castleFen |= (0x1) << 1;
+                  break;
+               }
+               case 'k':
+               {
+                  castleFen |= (0x1) << 2;
+
+                  break;
+               }
+               case 'q':
+               {
+                  castleFen |= (0x1) << 3;
+
+                  break;
+               }
+               default: {
+               }
+            }
+         }
          else if (fen[ch + 1] == ' ')
          {
             cerr << "\nERROR: INVALID FEN -CastelingSquare is Empty \n";
@@ -310,11 +407,39 @@ void chessFen(string fen, bool display)
          }
       }
       if (fenLocation == enPassant && fen[ch] != ' ')
-      { boardFen[rel] = fen[ch]; }
+      {
+         if ((fen[ch] != '-') && (fenEpCounter == 0))
+         {
+            fenEpCounter++;
+      
+
+            epSFen[0] = fen[ch];
+           // cout << endl << epSFen[0] << endl;
+            epSFen[1] = stoi(&fen[ch + 1]);
+         }
+         else if ((fen[ch] == '-'))
+         {
+         }
+         boardFen[rel] = fen[ch];
+      }
       if (fenLocation == halfMoveClock && fen[ch] != ' ')
-      { boardFen[rel] = fen[ch]; }
+      {
+         boardFen[rel] = fen[ch];
+         if (hmc == 0)
+         {
+            halfMcFen = stoi(&fen[ch]);
+            hmc++;
+         }
+      }
       if (fenLocation == fullMoveNumber && fen[ch] != ' ')
-      { boardFen[rel] = fen[ch]; }
+      {
+         boardFen[rel] = fen[ch];
+         if (fmc == 0)
+         {
+            fullMcFen = stoi(&fen[ch]);
+            fmc++;
+         }
+      }
       if (fenLocation > 5)
       {
          cerr << "ERROR: You'veGotBeKiddingme";
@@ -323,10 +448,6 @@ void chessFen(string fen, bool display)
 
       rel++;
    }
-
-   // cout << endl << rel << endl;
-   // cout << "\nNumberOfRow: " << row;
-   // cout << "\nNumberOfColumn: " << col;
 
    auto stop = high_resolution_clock::now();
    auto duration = duration_cast<microseconds>(stop - start);
