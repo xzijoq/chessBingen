@@ -15,63 +15,58 @@ void chessFen(string fen, bool display = false);
 
 int main()
 {
-   D(cout << atIndex.size() << endl;)
+
+	//cout<<getName(66);
+ //  D(cout << indexAt.size() << endl;)
    string star =
        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq h8 123 256";
    string pawnFuck = "1ppp1p1p/2P3P1/6p1/1p2pP2/2P5/PPPPPP2/1P2P3/8 w k e6 0 1";
    string pF1 = "1ppp1p1p/2P3P1/6p1/1p2pP2/2P5/PPPPPPP1/1P2P1PP/8 w - e6 0 1";
    string MajorFuck = "5r2/1Br1N1RR/6r1/2nB1nB1/1q2N3/8/2rb2b1/4N2R w - - 0 1";
-   string ff = "3Pp3/8/8/8/3r4/4R3/8/8 w - - 0 1";
+   string cap = "3Pp3/8/8/8/3r4/4R3/8/8 w - - 0 1";
+   string ff = "rr1Pp1rr/8/8/8/4r3/4R3/8/RR3rRR w - - 0 1";
 
    // cout << endl <<" as: "<< getPIndex('e', 6);
 
    boardsInit();
 
-    string star1 = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+   string star1 = "rnbqkbnr/pppppppp/8/8/8/7P/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
    string fuck = "19a10/30/22a7 w - - 0 0";
-   chessFen(star);
-   cout << ep;
-   boardDisplay("pBoard");
+   chessFen(ff);
+ //  cout << ep;
+  // boardDisplay(indexAt, true);
+   boardDisplay("pieceAt");
 
-   for (auto i{0}; i < 120; i++)
-   {
-      cout << (int)(atIndex[i])<<" ";
-	  if ((i + 1) % pBCol == 0) { cout << endl;
-	  }
-      ;
-   }
 
-   cout << endl << ep << endl;
+   
+
+   cout << endl;
    for (int i{0}; i < pBSz; i++)
    {
-      if (pBoard[i] == wP)
+      if (pieceAt[i] == bR)
       {
          moveGena(i);
-         ;
-      };
-   }
-   for (int i{0}; i < mvList.mvCount; i++)
-   {
-      if ((mvList.pkdMv[i] & cpFg))
-      { pBoard[toSq(mvList.pkdMv[i])] = captureDebug; }
-      else
-      {
-         pBoard[toSq(mvList.pkdMv[i])] = moveDebug;
+         
       }
    }
-   for (int i{0}; i < mvList.mvCount; i++)
+
+   for (auto i : mvList.pkdMv)
    {
-      // cout << capP(mvList.pkdMv[i])<<" ";
-      ;
-      ;
+      if (i & cpFg)
+      {
+        // cout <<endl<< frSq(i) << " ";
+         makeMove(i);
+        boardDisplay("pieceAt");
+         unMakeMove(i);
+      }
    }
 
-   boardDisplay("pBoard");
-   cout << "wow";
+   while (1) {}
+
 }
 /*
 DEBUG tests
- 
+ 
 
 
 
@@ -126,17 +121,17 @@ DEBUG tests
 
 /*
 Bogus:
-   // boardDisplay("pBoard");
+   // boardDisplay("pieceAt");
    // boardDisplay("board");
  //  cout << lol[1];
-  // pBoardC = pBoard;
+  // pBoardC = pieceAt;
 
    for (auto i{0}; i < pBSz; i++)
    {
-      // if (pBoard[i] != invalidPiece) { genMove(i); }
+      // if (pieceAt[i] != invalidPiece) { genMove(i); }
       // if (pBoardC[i] == 'p' || pBoardC[i] == 'P') { genMove(i); }
-         //  if (pBoard[i] == 'r' || pBoard[i] == 'R') { genMove(queenM,i,2); }
-      moveGena(i);
+         //  if (pieceAt[i] == 'r' || pieceAt[i] == 'R') { genMove(queenM,i,2);
+} moveGena(i);
    }
         u64 wow{0};
    wow = dN<<9;  //| (abs(dS)<<8) | (1<<19);
@@ -144,7 +139,7 @@ Bogus:
         cout << bitset<64>(wow>>9);
    int cow= (~(wow >> 9))+1;
         cout << " "<<cow;
-                
+                
 
 
 
@@ -162,20 +157,20 @@ Bogus:
    string ww = "8/K7/8/8/8/8/3k4/8/7P w - 0 1";
    string wh = "4c15/19a/19k w  e2 1";
       // boardDisplay(board, bCol);
-   // boardDisplay(pBoard, pBCol);
+   // boardDisplay(pieceAt, pBCol);
    chessFen(wh, true);
    string aa = "12";
 
-   //  cout << "\n" << sizeof(pBoard) << "\n";
+   //  cout << "\n" << sizeof(pieceAt) << "\n";
    boardDisplay("board");
-   boardDisplay("pBoard");
+   boardDisplay("pieceAt");
    // boardDisplay("boardIndexP");
 
    // boardPFill();
    cout << "\n NewBoard \n";
    // dire();
    // boardDisplay(board, bCol);
-   // boardDisplay(pBoard, pBCol);
+   // boardDisplay(pieceAt, pBCol);
    // boardDisplay(boardIndexP, bCol);
 
    // cout << "yoMama";

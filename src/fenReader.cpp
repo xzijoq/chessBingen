@@ -24,7 +24,7 @@ llike taht)
 
 using namespace std;
 using namespace std::chrono;
-static enum fenParts {
+enum fenParts {
    core,
    activePlayerFen,
    Castling,
@@ -152,7 +152,7 @@ void fillData(int row, int col)
    pBCol = (bCol + (maxJ - 1) * 2);
    pBSz = pBRow * pBCol;
    board.resize(bSz);
-   pBoard.resize(pBSz);
+   pieceAt.resize(pBSz);
    boardIndexP.resize(bSz);
 
    //  cout << "row: " << row << " col: " << col << endl;

@@ -1,4 +1,19 @@
 
+/*
+
+We can define the max numbers of piecs as only pawns promote, mostly
+to queen so 2 array starting with pawn then queen, and no major
+readjustment is required, and the engine will only promote to queen
+so in the very rare case when pawn promote to anything other than
+queen we can readjust the array 1 down from the last piece,
+the number of pieces at the start define the index
+
+pawnCount , queen count, knight count ...
+to scan for knights we start scanning from pawnCount+queenCount
+up to pC+qC+kC
+
+*/
+
 #include <bitset>
 #include "data.h"
 
@@ -21,7 +36,13 @@ u64 bKingL[50];
 u64 noPieceL[2];
 u64 invalidPieceList[2];
 
-const map<u64, u64 *> ToLi{
+array<int, 23> yoqwe;
+
+unordered_map<u64, array<int, 23> > ji{
+
+    {wP, yoqwe}};
+
+const unordered_map<u64, u64 *> listOf{
 
     {wP, wPawnL},
     {bP, bPawnL},
@@ -40,131 +61,121 @@ const map<u64, u64 *> ToLi{
 
 };
 
+// template <typename T>
+// constexpr void old_function(/* args */);
+
+// template <typename T>
+// constexpr auto alias_to_old = old_function<T>;
+
 array<u64, 20> a;
 
 void fillPieceList()
 {
-   ToLi.at(pBoard[12])[0] = 12;
+   listOf.at(pieceAt[12])[0] = 12;
    // cout<<
-  // for (int o{0}; o < pBSz; o++) { ToLi.at(pBoard[o])[0] = 0; }
+   for (int o{0}; o < pBSz; o++) { listOf.at(pieceAt[o])[0] = 0; }
    for (int i{0}; i < pBSz; i++)
    {
-      if (pBoard[i] != invalidPiece && pBoard[i] != noPiece)
+      if (pieceAt[i] != invalidPiece && pieceAt[i] != noPiece)
       {
-
-         ToLi.at(pBoard[i])[0]++;
-         u64 countR = ToLi.at(pBoard[i])[0];
-		 ToLi.at(pBoard[i])[countR] = i;
-         atIndex[i] = countR;
-         cout << countR << " ";
+         listOf.at(pieceAt[i])[0]++;
+         u64 countR = listOf.at(pieceAt[i])[0];
+         listOf.at(pieceAt[i])[countR] = i;
+         indexAt[i] = countR;
+         // cout << countR << " ";
       }
 
-      //<< pBoard[i] << " ";
-      // ToLi.at(pBoard[i])[ToLi.at(pBoard[i])[0]] = i;
-      // atIndex[i] = ToLi.at(pBoard[i])[0];
-      /*
-          switch (pBoard[i])
-      {
-         case bP:
-         {
-            bPawnL[0]++;
-            bPawnL[bPawnL[0]] = i;   // append at end
-            atIndex[i] = bPawnL[0];  // append the IndexBoard
-            break;
-         }
-      }
-          */
+
    }
 }
-
 void fillPieceLista()
 {
    for (int i{0}; i < pBSz; i++)
    {
-      switch (pBoard[i])
+      switch (pieceAt[i])
       {
          case bP:
          {
             bPawnL[0]++;
             bPawnL[bPawnL[0]] = i;   // append at end
-            atIndex[i] = bPawnL[0];  // append the IndexBoard
+            indexAt[i] = bPawnL[0];  // append the IndexBoard
             break;
          }
          case wP:
          {
             wPawnL[0]++;
             wPawnL[wPawnL[0]] = i;
-            atIndex[i] = wPawnL[0];
+            indexAt[i] = wPawnL[0];
             break;
          }
          case bR:
          {
             bRookL[0]++;
             bRookL[bRookL[0]] = i;
-            atIndex[i] = bRookL[0];
+            indexAt[i] = bRookL[0];
             break;
          }
          case wR:
          {
             wRookL[0]++;
             wRookL[wRookL[0]] = i;
-            atIndex[i] = wRookL[0];
+            indexAt[i] = wRookL[0];
             break;
          }
          case bB:
          {
             bBishopL[0]++;
             bBishopL[bBishopL[0]] = i;
-            atIndex[i] = bBishopL[0];
+            indexAt[i] = bBishopL[0];
             break;
          }
          case wB:
          {
             wBishopL[0]++;
             wBishopL[wBishopL[0]] = i;
-            atIndex[i] = wBishopL[0];
+            indexAt[i] = wBishopL[0];
             break;
          }
          case bN:
          {
             bKnightL[0]++;
             bKnightL[bKnightL[0]] = i;
-            atIndex[i] = bKnightL[0];
+            indexAt[i] = bKnightL[0];
             break;
          }
          case wN:
          {
             wKnightL[0]++;
             wKnightL[wKnightL[0]] = i;
-            atIndex[i] = wKnightL[0];
+            indexAt[i] = wKnightL[0];
             break;
          }
          case bQ:
          {
             bQueenL[0]++;
             bQueenL[bQueenL[0]] = i;
-            atIndex[i] = bQueenL[0];
+            indexAt[i] = bQueenL[0];
             break;
          }
          case wQ:
          {
             wQueenL[0]++;
             wQueenL[wQueenL[0]] = i;
-            atIndex[i] = wQueenL[0];
+            indexAt[i] = wQueenL[0];
             break;
          }
          case bK:
          {
             bKingL[0]++;
             bKingL[bKingL[0]] = i;
-            atIndex[i] = bKingL[0];
+            indexAt[i] = bKingL[0];
             break;
          }
          case wK:
          {
             wKingL[0]++;
             wKingL[wKingL[0]] = i;
-            atIndex[i] = wKingL[0];
+            indexAt[i] = wKingL[0];
             break;
          }
          case noPiece:
@@ -184,12 +195,11 @@ void fillPieceLista()
       }
    }
 }
-
 void addQuiteMv() {}
 void inline moveGena(int frm, u64 piece)
 { /*if no piece is specified it'll search through the board to find it*/
 
-   if (piece == noPiece) { piece = pBoard[frm]; }
+   if (piece == noPiece) { piece = pieceAt[frm]; }
 
    switch (piece)
    {
@@ -269,7 +279,6 @@ void inline moveGena(int frm, u64 piece)
       }
    }
 }
-
 void genMove(s64 *pieceM, int frm, int color)
 {
    if (color != white && color != black) { cerr << "\nERROR:ColorMovegen\n"; }
@@ -281,21 +290,22 @@ void genMove(s64 *pieceM, int frm, int color)
       for (auto j{1}; pieceM[j] != 0; j++)
       {
          mvTo = frm + pieceM[j];
-         if (pBoard[mvTo] == invalidPiece) { continue; }
-         if ((pBoard[mvTo] != noPiece && pBoard[mvTo] != moveDebug))
+         if (pieceAt[mvTo] == invalidPiece) { continue; }
+         if ((pieceAt[mvTo] != noPiece && pieceAt[mvTo] != moveDebug))
          {
-            if ((pBoard[mvTo] & color) == xcolor)
+            if ((pieceAt[mvTo] & color) == xcolor)
             {
-               // pBoard[mvTo] = captureDebug;
+               // pieceAt[mvTo] = captureDebug;
 
-               pshMv(Mv(frm, mvTo, cpFg, nP, pBoard[frm], pBoard[mvTo], 50000));
+               pshMv(
+                   Mv(frm, mvTo, cpFg, nP, pieceAt[frm], pieceAt[mvTo], 50000));
             }
          }
          else
          {
-            pshMv(Mv(frm, mvTo, 0, nP, pBoard[frm], pBoard[mvTo], 0));
+            pshMv(Mv(frm, mvTo, 0, nP, pieceAt[frm], pieceAt[mvTo], 0));
 
-            // pBoard[mvTo] = moveDebug;
+            // pieceAt[mvTo] = moveDebug;
          }
       }
    }
@@ -307,21 +317,21 @@ void genMove(s64 *pieceM, int frm, int color)
          {
             mvTo = frm + (pieceM[j] * i);
 
-            if (pBoard[mvTo] == invalidPiece) { break; }
-            if ((pBoard[mvTo] != noPiece && pBoard[mvTo] != moveDebug))
+            if (pieceAt[mvTo] == invalidPiece) { break; }
+            if ((pieceAt[mvTo] != noPiece && pieceAt[mvTo] != moveDebug))
             {
-               if ((pBoard[mvTo] & white) == xcolor)
+               if ((pieceAt[mvTo] & white) == xcolor)
                {
-                  // pBoard[mvTo] = captureDebug;
-                  pshMv(Mv(frm, mvTo, cpFg, nP, pBoard[frm], pBoard[mvTo],
+                  // pieceAt[mvTo] = captureDebug;
+                  pshMv(Mv(frm, mvTo, cpFg, nP, pieceAt[frm], pieceAt[mvTo],
                            50000));
                }
                break;
             }
             else
             {
-               // pBoard[mvTo] = moveDebug;
-               pshMv(Mv(frm, mvTo, 0, nP, pBoard[frm], pBoard[mvTo], 0));
+               // pieceAt[mvTo] = moveDebug;
+               pshMv(Mv(frm, mvTo, 0, nP, pieceAt[frm], pieceAt[mvTo], 0));
             }
          }
       }
@@ -331,7 +341,6 @@ void genMove(s64 *pieceM, int frm, int color)
       cerr << "ERROR:UNDEFINED PIECE TYPE genMove";
    }
 }
-
 // for compound pieces
 void genMove(s64 **pieceM, int frm, int color)
 {
@@ -348,7 +357,6 @@ void genMove(s64 **pieceM, int frm, int color)
       cerr << "ERROR:QueenMoveGen";
    }
 }
-
 void inline pawnMGen(int frm, int color)
 { /*clear ep at eatch moveGen*/
    auto cRank = getRank(frm);
@@ -386,12 +394,12 @@ void inline pawnMGen(int frm, int color)
       /*passiveMove*/
       if (j == 0)
       {
-         if (pBoard[mvTo] == invalidPiece)
+         if (pieceAt[mvTo] == invalidPiece)
          {
             cerr << "ERROR:Pawn" << mvTo;
             continue;
          }
-         if (pBoard[mvTo] != noPiece && pBoard[mvTo] != moveDebug)
+         if (pieceAt[mvTo] != noPiece && pieceAt[mvTo] != moveDebug)
          {
             continue;
             ;
@@ -400,21 +408,21 @@ void inline pawnMGen(int frm, int color)
          {
             if (canPromote == 1)
             {
-               pshMv(Mv(frm, mvTo, 0, queen | color, pBoard[frm], 0, 0));
-               pshMv(Mv(frm, mvTo, 0, rook | color, pBoard[frm], 0, 0));
-               pshMv(Mv(frm, mvTo, 0, knight | color, pBoard[frm], 0, 0));
-               pshMv(Mv(frm, mvTo, 0, bishop | color, pBoard[frm], 0, 0));
+               pshMv(Mv(frm, mvTo, 0, queen | color, pieceAt[frm], 0, 0));
+               pshMv(Mv(frm, mvTo, 0, rook | color, pieceAt[frm], 0, 0));
+               pshMv(Mv(frm, mvTo, 0, knight | color, pieceAt[frm], 0, 0));
+               pshMv(Mv(frm, mvTo, 0, bishop | color, pieceAt[frm], 0, 0));
 
-               // pBoard[mvTo] = moveDebug;
+               // pieceAt[mvTo] = moveDebug;
             }
             else  // not  a promotion move
             {
                if (startPos == true)
                {
-                  if (pBoard[mvTo + mC] == noPiece)
+                  if (pieceAt[mvTo + mC] == noPiece)
                   {
-                     // pBoard[mvTo + mC] = moveDebug;
-                     pshMv(Mv(frm, mvTo + mC, psFg | epFg, nP, pBoard[frm], 0,
+                     // pieceAt[mvTo + mC] = moveDebug;
+                     pshMv(Mv(frm, mvTo + mC, psFg | epFg, nP, pieceAt[frm], 0,
                               0));
 
                      // ep = mvTo;
@@ -423,14 +431,14 @@ void inline pawnMGen(int frm, int color)
                   }
                   else  // the double move square is not empty
                   {
-                     pshMv(Mv(frm, mvTo, noFg, nP, pBoard[frm], 0, 0));
+                     pshMv(Mv(frm, mvTo, noFg, nP, pieceAt[frm], 0, 0));
 
-                     // pBoard[mvTo] = moveDebug;
+                     // pieceAt[mvTo] = moveDebug;
                   }
                }
                else  // Not a start Position
                {
-                  pshMv(Mv(frm, mvTo, noFg, nP, pBoard[frm], 0, 0));
+                  pshMv(Mv(frm, mvTo, noFg, nP, pieceAt[frm], 0, 0));
                }
             }
          }
@@ -438,67 +446,166 @@ void inline pawnMGen(int frm, int color)
       /* CaptureMove*/
       if (j > 0)
       {
-         if (pBoard[mvTo] == invalidPiece) { continue; }
+         if (pieceAt[mvTo] == invalidPiece) { continue; }
 
          // cout  << " "<<ep<<" ";
          if (ep == mvTo)
          {
-            pshMv(Mv(frm, mvTo, cpFg | epFg, nP, pBoard[frm], pBoard[mvTo - mC],
-                     5000));
+            pshMv(Mv(frm, mvTo, cpFg | epFg, nP, pieceAt[frm],
+                     pieceAt[mvTo - mC], 5000));
             // genEp move
-            pBoard[mvTo + mC] = captureDebug;
+            pieceAt[mvTo + mC] = captureDebug;
          }
-         if ((pBoard[mvTo] != noPiece && pBoard[mvTo] != moveDebug) &&
-             ((pBoard[mvTo] & white) == xcolor))
+         if ((pieceAt[mvTo] != noPiece && pieceAt[mvTo] != moveDebug) &&
+             ((pieceAt[mvTo] & white) == xcolor))
          {
             if (canPromote == 1)
             {
-               pshMv(Mv(frm, mvTo, cpFg, queen | color, pBoard[frm],
-                        pBoard[mvTo], 5000));
-               pshMv(Mv(frm, mvTo, cpFg, rook | color, pBoard[frm],
-                        pBoard[mvTo], 5000));
-               pshMv(Mv(frm, mvTo, cpFg, knight | color, pBoard[frm],
-                        pBoard[mvTo], 5000));
-               pshMv(Mv(frm, mvTo, cpFg, bishop | color, pBoard[frm],
-                        pBoard[mvTo], 5000));
+               pshMv(Mv(frm, mvTo, cpFg, queen | color, pieceAt[frm],
+                        pieceAt[mvTo], 5000));
+               pshMv(Mv(frm, mvTo, cpFg, rook | color, pieceAt[frm],
+                        pieceAt[mvTo], 5000));
+               pshMv(Mv(frm, mvTo, cpFg, knight | color, pieceAt[frm],
+                        pieceAt[mvTo], 5000));
+               pshMv(Mv(frm, mvTo, cpFg, bishop | color, pieceAt[frm],
+                        pieceAt[mvTo], 5000));
 
-               pBoard[mvTo] = captureDebug;
-               // pBoard[mvTo] = '.';
+               pieceAt[mvTo] = captureDebug;
+               // pieceAt[mvTo] = '.';
             }
             else /*not a promotion capture*/
             {
-               pshMv(Mv(frm, mvTo, cpFg, nP, pBoard[frm], pBoard[mvTo], 5000));
-               // pBoard[mvTo] = captureDebug;
+               pshMv(
+                   Mv(frm, mvTo, cpFg, nP, pieceAt[frm], pieceAt[mvTo], 5000));
+               // pieceAt[mvTo] = captureDebug;
             }
          }
       }
    }
 }
 void makeMove(u64 pMove)
-{
+{// still need to check for checks and pins
+	//what happens to move Value
    u64 frmSq = frSq(pMove);
    u64 toSq = toSq(pMove);
-   u64 movingPiece;
-   u64 capturedPiece;
 
-   switch (movingPiece)
+
+   if (pMove & csFg)
    {
-      case wP:
+      // generate castelingMove
+   }
+   if (pMove & cpFg)
+   {
+      auto capSq = toSq;
+      if (pMove & epFg)
       {
-         // generate capture
-         if (pMove & cpFg)
-         {
-            ;
-            ;
-         }
-
-         ;
+         //capSq dependsOn color of pawn 
+         
       }
+      // capturePiece
+      u64 lastPieceSq = listOf.at(pieceAt[capSq])[listOf.at(pieceAt[capSq])[0]];      
+
+	
+      listOf.at(pieceAt[capSq])[indexAt[capSq]] =
+          lastPieceSq;                       // lastPieceInPlaceOfCapture
+      indexAt[lastPieceSq] = indexAt[capSq];  // New index of the last piece
+      listOf.at(pieceAt[capSq])[0]--;         // count --
+      if (listOf.at(pieceAt[capSq])[0] < 0) { cout << "NegetivePieceCount"; }
+      // capturedPiece
+   }
+   cout << endl << "PieceList: ";
+  
+
+   // pieceMovement
+
+   listOf.at(pieceAt[frmSq])[indexAt[frmSq]] = toSq;
+   indexAt[toSq] = indexAt[frmSq];  // toSq now contains the index of
+   indexAt[frmSq] = invalidIndex;
+   pieceAt[toSq] = pieceAt[frmSq];
+   pieceAt[frmSq] = noPiece;
+   // endPieceMovement
+}
+void unMakeMove(u64 pMove)
+{  // still need to check for checks and pins
+   // what happens to move Value
+   u64 toSq = frSq(pMove);
+   u64 frmSq = toSq(pMove);
+   u64 capP = capP(pMove);
+
+
+   if (pMove & csFg)
+   {
+      // generate castelingMove
+   }
+   // pieceMovement
+
+   listOf.at(pieceAt[frmSq])[indexAt[frmSq]] = toSq;
+   indexAt[toSq] = indexAt[frmSq];  // toSq now contains the index of
+   indexAt[frmSq] = invalidIndex;
+   pieceAt[toSq] = pieceAt[frmSq];
+   pieceAt[frmSq] = capP;
+   // endPieceMovement
+   if (pMove & cpFg)
+   {
+      auto capSq = toSq;
+      if (pMove & epFg)
+      {
+         // capSq dependsOn color of pawn
+      }
+      // capturePiece
+      listOf.at(capP)[0]++;  // count ++
+      listOf.at(capP)[listOf.at(capP)[0]]=frmSq;
+      indexAt[frmSq] = listOf.at(capP)[0];      
+      if (listOf.at(pieceAt[capSq])[0] < 0) { cout << "NegetivePieceCount"; }
+      // capturedPiece
    }
 }
-void genCapture(u64 piece) {}
+void genaCapture(u64 piece) {}
 
 void makeMoveWp() {}
+
+void dire()
+{
+   std::cout << " dN: " << dN << " dS: " << dS << " dE: " << dE << " dW " << dW
+             << " dNE: " << dNE << " dNW: " << dNW << " dSE: " << dSE
+             << " dSW: " << dSW << endl;
+   //<< " " << dS << " " << ;
+
+   // cout << fc;
+}
+
+/*DEBUG   MakeMove
+
+   //
+   index=indexOfpieceat[to]
+   sq=bK_list[bKcount];
+   bk_List[index]=sq
+   bKcount--;
+   bPiece--;
+   //
+#define wow(x) (char)(getFile(x) + 'a' - 1) << getRank(x)
+   cout << endl << "PieceList: ";
+   for (int i{1}; i < listOf.at(pieceAt[toSq])[0]+1; i++)
+   { cout << wow(listOf.at(pieceAt[toSq])[i]) << " "; }
+   cout << "endPlist" << endl;
+
+   cout << " frmSq: " << wow(frmSq);
+   cout << " toSq: " << (char)(getFile(toSq) + 'a' - 1) << getRank(toSq);
+   cout << endl
+        << " lastSq: " << (char)(getFile(lastPieceSq) + 'a' - 1)
+        << getRank(lastPieceSq);
+
+   cout << endl;
+   cout << " ioTq " << ioTq;
+   cout << " ioLPQ " << indexAt[lastPieceSq];
+   //#define countOf(x) listOf.at(x)[0]
+
+         //PutATEnd
+         cout << endl << "PieceList: ";
+      for (int i{1}; i < listOf.at(pieceAt[toSq])[0] + 1; i++)
+      { cout << wow(listOf.at(pieceAt[toSq])[i]) << " "; }
+      cout << "endPlist" << endl;
+      */
 
 /*
 
@@ -508,19 +615,19 @@ void makeMoveWp() {}
                {
                              //pawnStartFlag?
                   pshMv(
-                      Mv(frm, mvTo, (cpFg | psFg), nP, pBoard[frm],
-   pBoard[mvTo], 5000));
-                             // pBoard[mvTo] = captureDebug;
+                      Mv(frm, mvTo, (cpFg | psFg), nP, pieceAt[frm],
+   pieceAt[mvTo], 5000));
+                             // pieceAt[mvTo] = captureDebug;
                            }
                else //Not a starting capture
                {
-                 
-                  pshMv(Mv(frm, mvTo, cpFg, nP, pBoard[frm],
-                           pBoard[mvTo], 5000));
-                  // pBoard[mvTo] = captureDebug;
+                 
+                  pshMv(Mv(frm, mvTo, cpFg, nP, pieceAt[frm],
+                           pieceAt[mvTo], 5000));
+                  // pieceAt[mvTo] = captureDebug;
                }
                            */
-// pshMv(Mv(frm, mvTo, cpFg, nP, pBoard[frm], pBoard[mvTo], 5000));
+// pshMv(Mv(frm, mvTo, cpFg, nP, pieceAt[frm], pieceAt[mvTo], 5000));
 
 /*
 void inline wPawnMGen(int frm)
@@ -535,31 +642,31 @@ void inline wPawnMGen(int frm)
 
       if (j == 0)
       {
-         if (pBoard[mvTo] == invalidPiece)
+         if (pieceAt[mvTo] == invalidPiece)
          {
             cerr << "ERROR: WHere exactly is your PawnII";
             continue;
          }
-         if (pBoard[mvTo] != noPiece && pBoard[mvTo] != moveDebug)
+         if (pieceAt[mvTo] != noPiece && pieceAt[mvTo] != moveDebug)
          { continue; }
          else
          {
-            if (canPromote == 1) { pBoard[mvTo] = '{'; }
+            if (canPromote == 1) { pieceAt[mvTo] = '{'; }
             else
             {
-               pBoard[mvTo] = moveDebug;
+               pieceAt[mvTo] = moveDebug;
             }
          }
       }
       if (j > 0)
       {
-         if (pBoard[mvTo] == invalidPiece) { continue; }
-         if (pBoard[mvTo] != noPiece && pBoard[mvTo] != moveDebug)
+         if (pieceAt[mvTo] == invalidPiece) { continue; }
+         if (pieceAt[mvTo] != noPiece && pieceAt[mvTo] != moveDebug)
          {
-            if (canPromote == 1) { pBoard[mvTo] = '}'; }
+            if (canPromote == 1) { pieceAt[mvTo] = '}'; }
             else
             {
-               pBoard[mvTo] = captureDebug;
+               pieceAt[mvTo] = captureDebug;
             }
          }
       }
@@ -574,7 +681,7 @@ void inline bPawnMGen(int frm)
       cerr << "ERROR: WHere exactly is your Pawn " << cRank << " " << frm <<
 " "
            << pBCol;
-      pBoard[frm] = '?';
+      pieceAt[frm] = '?';
    }
    int mvTo{'{'};
    if (cRank == 2) { canPromote = 1; }
@@ -584,31 +691,31 @@ void inline bPawnMGen(int frm)
 
       if (j == 0)
       {
-         if (pBoard[mvTo] == invalidPiece)
+         if (pieceAt[mvTo] == invalidPiece)
          {
             cerr << "ERROR: WHere exactly is your PawnII";
             continue;
          }
-         if (pBoard[mvTo] != noPiece && pBoard[mvTo] != moveDebug)
+         if (pieceAt[mvTo] != noPiece && pieceAt[mvTo] != moveDebug)
          { continue; }
          else
          {
-            if (canPromote == 1) { pBoard[mvTo] = '{'; }
+            if (canPromote == 1) { pieceAt[mvTo] = '{'; }
             else
             {
-               pBoard[mvTo] = moveDebug;
+               pieceAt[mvTo] = moveDebug;
             }
          }
       }
       if (j > 0)
       {
-         if (pBoard[mvTo] == invalidPiece) { continue; }
-         if (pBoard[mvTo] != noPiece && pBoard[mvTo] != moveDebug)
+         if (pieceAt[mvTo] == invalidPiece) { continue; }
+         if (pieceAt[mvTo] != noPiece && pieceAt[mvTo] != moveDebug)
          {
-            if (canPromote == 1) { pBoard[mvTo] = '}'; }
+            if (canPromote == 1) { pieceAt[mvTo] = '}'; }
             else
             {
-               pBoard[mvTo] = captureDebug;
+               pieceAt[mvTo] = captureDebug;
             }
          }
       }
@@ -622,12 +729,12 @@ void inline knightMGen(int frm)
    for (auto j{0}; j < knightM.size(); j++)
    {
       mvTo = frm + knightM[j];
-      if (pBoard[mvTo] == invalidPiece) { continue; }
-      if (pBoard[mvTo] != noPiece && pBoard[mvTo] != moveDebug)
-      { pBoard[mvTo] = captureDebug; }
+      if (pieceAt[mvTo] == invalidPiece) { continue; }
+      if (pieceAt[mvTo] != noPiece && pieceAt[mvTo] != moveDebug)
+      { pieceAt[mvTo] = captureDebug; }
       else
       {
-         pBoard[mvTo] = moveDebug;
+         pieceAt[mvTo] = moveDebug;
       }
    }
 }
@@ -637,12 +744,12 @@ void inline kingMGen(int frm)
    for (auto j{0}; j < kingM.size(); j++)
    {
       mvTo = frm + kingM[j];
-      if (pBoard[mvTo] == invalidPiece) { continue; }
-      if (pBoard[mvTo] != noPiece && pBoard[mvTo] != moveDebug)
-      { pBoard[mvTo] = captureDebug; }
+      if (pieceAt[mvTo] == invalidPiece) { continue; }
+      if (pieceAt[mvTo] != noPiece && pieceAt[mvTo] != moveDebug)
+      { pieceAt[mvTo] = captureDebug; }
       else
       {
-         pBoard[mvTo] = moveDebug;
+         pieceAt[mvTo] = moveDebug;
       }
    }
 }
@@ -655,16 +762,16 @@ void inline rookMGen(int frm)
       {
          mvTo = frm + (rookM[j] * i);
 
-         if (pBoard[mvTo] == invalidPiece) { break; }
-         if (pBoard[mvTo] != noPiece)
+         if (pieceAt[mvTo] == invalidPiece) { break; }
+         if (pieceAt[mvTo] != noPiece)
          {
-            if (pBoard[mvTo] == moveDebug) { continue; }
-            pBoard[mvTo] = captureDebug;
+            if (pieceAt[mvTo] == moveDebug) { continue; }
+            pieceAt[mvTo] = captureDebug;
              break;
          }
          else
          {
-            pBoard[mvTo] = moveDebug;
+            pieceAt[mvTo] = moveDebug;
          }
       }
    }
@@ -677,28 +784,18 @@ void inline bishopMGen(int frm)
       for (auto i{1}; i < 256; i++)
       {
          mvTo = frm + (bishopM[j] * i);
-         if (pBoard[mvTo] == invalidPiece) { break; }
-         if (pBoard[mvTo] != noPiece)
+         if (pieceAt[mvTo] == invalidPiece) { break; }
+         if (pieceAt[mvTo] != noPiece)
          {
-            if (pBoard[mvTo] == moveDebug) { continue; }
-            pBoard[mvTo] = captureDebug;
+            if (pieceAt[mvTo] == moveDebug) { continue; }
+            pieceAt[mvTo] = captureDebug;
              break;
          }
          else
          {
-            pBoard[mvTo] = moveDebug;
+            pieceAt[mvTo] = moveDebug;
          }
       }
    }
 }
 */
-
-void dire()
-{
-   std::cout << " dN: " << dN << " dS: " << dS << " dE: " << dE << " dW " << dW
-             << " dNE: " << dNE << " dNW: " << dNW << " dSE: " << dSE
-             << " dSW: " << dSW << endl;
-   //<< " " << dS << " " << ;
-
-   // cout << fc;
-}

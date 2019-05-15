@@ -11,19 +11,19 @@ u64         bSz = bRow * bCol;
 u64         pBRow = (bRow + maxJ * 2);
 u64         pBCol = (bCol + (maxJ - 1) * 2);
 u64         pBSz = pBRow * pBCol;
-vector<u64>      pBoard(pBSz);      // boardPadded
+vector<u64>      pieceAt(pBSz);      // boardPadded
 vector<u64>      board(bSz);        // board
-vector<u64> boardIndexP(bSz);  // index of board data in pBoard
+vector<u64> boardIndexP(bSz);  // index of board data in pieceAt
 
 #elif dynamicChess == 0
 
-array<u64, pBSz>     pBoard;
+array<u64, pBSz>     pieceAt;
 array<u64, bSz>      board;
 array<u64, bSz> boardIndexP;
-//array<u64, pBSz>     atIndex;
+//array<u64, pBSz>     indexAt;
 #endif
 
-vector<u64> atIndex(pBSz);
+vector<u64> indexAt(pBSz);
 
 /*----------------BoardData-----------*/
 

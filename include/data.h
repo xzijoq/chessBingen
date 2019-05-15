@@ -3,7 +3,7 @@
 #include <cassert>
 #include <cstring>
 #include <iostream>
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 #define debug
@@ -29,6 +29,8 @@ using u32 = unsigned int;
 
 #pragma region BoardStructure
 /* --------------BOARD DATA------------------*/
+
+//Make it const and declare in fen, once read cant change?
 #if dynamicChess == 1
 extern u64 maxJ; /*knight can jump 2square out of board*/
 /*Boards Data*/
@@ -39,9 +41,9 @@ extern u64 bSz;  /*board Size*/
 extern u64         pBRow;        /*padded Board Row Count*/
 extern u64         pBCol;        /*padded Board Col Count*/
 extern u64         pBSz;         /*padded Board Size*/
-extern vector<u64> pBoard;       // boardPadded
+extern vector<u64> pieceAt;      // boardPadded
 extern vector<u64> board;        // board
-extern vector<u64> boardIndexP;  // index of board data in pBoard
+extern vector<u64> boardIndexP;  // index of board data in pieceAt
 
 #elif dynamicChess == 0
 constexpr u64 maxJ = 2;
@@ -52,15 +54,15 @@ constexpr u64 pBRow = (bRow + maxJ * 2);
 constexpr u64 pBCol = (bCol + (maxJ - 1) * 2);
 constexpr u64 pBSz = pBRow * pBCol;
 /*The Boards */
-extern array<u64, pBSz> pBoard;       // boardPadded
+extern array<u64, pBSz> pieceAt;      // boardPadded
 extern array<u64, bSz>  board;        // board
-extern array<u64, bSz>  boardIndexP;  // index of board data in pBoard
+extern array<u64, bSz>  boardIndexP;  // index of board data in pieceAt
 extern array<u64, pBSz> pBoardC;      // boardPaddedCopy
-                                      // extern array<u64, pBSz>       atIndex;
+                                      // extern array<u64, pBSz>       indexAt;
                                       /*TheBoards End*/
 #endif
 
-extern vector<u64> atIndex;  // board that index piece
+extern vector<u64> indexAt;  // board that index piece
 
 extern int          activeSide;
 extern unsigned int castle;
@@ -86,6 +88,8 @@ inline int getPIndex(int cfile, int rank)
    return (int)((((cfile - 'a') + (1) + (maxJ - 1)) + ((rank - 1) * (pBCol))) +
                 (maxJ * pBCol) - 1);
 }
+extern string getName(u64 sq);
+
 
 inline int getPIndex(string pos)
 { /*max 2 digit rank*/
@@ -149,11 +153,11 @@ inline void     pshMv(u64 mv)
 
 extern array<u8, 24> dPce;
 constexpr int        blackOffset{6};  // 6
-extern map<u8, u8>   displayMap;
+extern unordered_map<u8, u8>   displayMap;
 
 #pragma region pieceAndDirection
 
-#define dN (pBCol)
+#define dN (s64)(pBCol)
 #define dS (-dN)
 #define dE (1)
 #define dW (-1)
@@ -182,7 +186,7 @@ enum materialValue : u8
    pawnB = 12
 
 };
-
+constexpr u64 invalidIndex = 0;
 enum pieceGeneric : u8
 {
    noPiece = 0B00000000,
@@ -218,19 +222,23 @@ enum piec : u8 /*piecesWhite*/
    bK = black | king
 };
 
-extern u64                   wPawnL[];
-extern u64                   wRookL[];
-extern u64                   wQueenL[];
-extern u64                   wBishopL[];
-extern u64                   wKnightL[];
-extern u64                   wKingL[];
-extern u64                   bPawnL[];
-extern u64                   bRookL[];
-extern u64                   bQueenL[];
-extern u64                   bBishopL[];
-extern u64                   bKnightL[];
-extern u64                   bKingL[];
+extern u64 wPawnL[];
+extern u64 wRookL[];
+extern u64 wQueenL[];
+extern u64 wBishopL[];
+extern u64 wKnightL[];
+extern u64 wKingL[];
+extern u64 bPawnL[];
+extern u64 bRookL[];
+extern u64 bQueenL[];
+extern u64 bBishopL[];
+extern u64 bKnightL[];
+extern u64 bKingL[];
 
+// extern map<u64, u64*> listOf;
+extern const unordered_map<u64, u64 *> listOf;
+#define countOf(x) listOf.at(x)[0]
+#define lastOf(x) listOf.at(x)[0]
 #pragma endregion
 
 #pragma region functionDefinitions
@@ -238,7 +246,7 @@ extern u64                   bKingL[];
 /*board*/
 extern void boardsInit();
 extern void boardDisplay(string boarD);
-extern void boardDisplay(vector<u64> boarD);
+extern void boardDisplay(vector<u64> boarD, bool intDisplay = false);
 
 extern void dire();
 extern void boardPFill(bool display = true);
@@ -251,6 +259,8 @@ extern void inline pawnMGen(int pos, int color);
 extern void genMove(s64 *pieceM, int pos, int color);
 extern void genMove(s64 **pieceM, int pos, int color);
 extern void fillPieceList();
+extern void makeMove(u64 pMove);
+extern void unMakeMove(u64 pMove);
 /* DEFINITIONS */
 #pragma endregion
 /*--------BOARD DATA END--------------*/
