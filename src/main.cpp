@@ -3,21 +3,25 @@ MaxBoardSize 128 limited by the 128 bit interger
 MaxJumperSize 4, in a 12 x12 requires a padding of
 */
 #include <data.h>
+#include "board.h"
+#include "pieces.h"
 #include <bitset>
 #include <chrono>
 #include <cstdlib>
 
 using namespace std::chrono;
+using namespace std;
 
-moveList mvList;
+// moveList mvList;
 
 void chessFen(string fen, bool display = false);
 
 int main()
 {
-
-	//cout<<getName(66);
- //  D(cout << indexAt.size() << endl;)
+   pieceList[0][1] = 2;
+   cout << "hi";
+   // cout<<getName(66);
+   //  D(cout << indexAt.size() << endl;)
    string star =
        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq h8 123 256";
    string pawnFuck = "1ppp1p1p/2P3P1/6p1/1p2pP2/2P5/PPPPPP2/1P2P3/8 w k e6 0 1";
@@ -33,40 +37,36 @@ int main()
    string star1 = "rnbqkbnr/pppppppp/8/8/8/7P/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
    string fuck = "19a10/30/22a7 w - - 0 0";
    chessFen(ff);
- //  cout << ep;
-  // boardDisplay(indexAt, true);
-   boardDisplay("pieceAt");
-
+   //  cout << ep;
+   // boardDisplay(indexAt, true);
+   pieceAt[getPIndex("c3")] = bN;
+   pieceAt[getPIndex("d5")] = wN;
+   boardDisplay(pieceAt);
 
    
-
    cout << endl;
    for (int i{0}; i < pBSz; i++)
    {
-      if (pieceAt[i] == bR)
-      {
-         moveGena(i);
-         
-      }
+      if (pieceAt[i]==bN) { moveGena(i); }
    }
-
-   for (auto i : mvList.pkdMv)
+    for (auto i : mvList) { cout << i << " "; }
+   for (auto i : mvList)
    {
+      if (i == 0) { continue; }
       if (i & cpFg)
       {
-        // cout <<endl<< frSq(i) << " ";
+          std::cout <<endl<< frSq(i) << " ";
          makeMove(i);
-        boardDisplay("pieceAt");
+           boardDisplay(pieceAt);
          unMakeMove(i);
       }
    }
-
+   // boardDisplay(indexAt, true);
    while (1) {}
-
 }
 /*
 DEBUG tests
- 
+ 
 
 
 
@@ -139,7 +139,7 @@ Bogus:
         cout << bitset<64>(wow>>9);
    int cow= (~(wow >> 9))+1;
         cout << " "<<cow;
-                
+                
 
 
 

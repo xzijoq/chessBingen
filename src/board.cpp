@@ -1,16 +1,12 @@
 #include <assert.h>
 #include <data.h>
+
+#include "board.h"
+#include "pieces.h"
 #include <string>
 
 using namespace std;
-unordered_map<u8, u8> displayMap{
-    {invalidPiece, '+'}, {noPiece, '-'}, {moveDebug, '.'},
-    {captureDebug, '*'}, /*Fancy*/
-    {wP, 'P'},           {wN, 'N'},      {wB, 'B'},
-    {wR, 'R'},           {wQ, 'Q'},      {wK, 'K'}, /*white*/
-    {bP, 'p'},           {bN, 'n'},      {bB, 'b'},
-    {bR, 'r'},           {bQ, 'q'},      {bK, 'k'} /*black*/
-};
+
 
 void boardsInit()
 {
@@ -70,9 +66,76 @@ void boardFill()
    }
 }
 
+void boardDisplay(const vector<u64> &boarD, bool intBoard)
+{
+ //  dPce[0] = noPiece;
+   u64    offset{0}, rank{bSz / bCol};
+   u8     file{'a'};
+   size_t bS{0}, bDRow{0};
+   bS = boarD.size();
+   (bS == pBSz) ? offset = pBCol : offset = bCol;
+   bDRow = bS / offset;
+   auto j{bDRow - 1};
+   std::cout << "\nBoardVec: \n";
+   /*DisplayLoop*/
+   for (auto i{0}; i < bDRow; i++)
+   {
+      if (bS == pBSz)
+      {
+         if ((i >= maxJ) && (rank > 0))
+         {
+            if ((rank < 10) && (rank >= 0)) { cout << " "; }
+            cout << " " << rank;
+            rank--;
+         }
+         else
+         {
+            cout << "   ";
+         }
+      }
+      else
+      {
+         if ((rank < 10) && (rank >= 0)) { cout << " "; }
+         cout << " " << rank;
+         rank--;
+      }
+      for (auto k{0}; k < offset; k++)
+      {
+         auto pos = j * offset + k;
+         (intBoard) ? cout << "  " << boarD[pos]
+                    : cout << "  " << displayMap.at(boarD[pos]);
+
+         //  (boarD[pos] < 32) ? cout << "  " << dPce[boarD[pos]]
+         //                   : cout << "  " << boarD[pos];
+      }
+      cout << endl;
+      j--;
+   }
+   cout << "\n   ";
+   if (bS == pBSz)
+   {
+      for (auto i{0}; i < maxJ - 1; i++) { cout << "   "; }
+   }
+   for (auto i{0}; i < bCol; i++) { cout << "  " << file++; }
+   cout << endl;
+}
+string getName(u64 sq)
+{
+   char   file = (char)(getFile(sq) + 'a' - 1);
+   char   rank = getRank(sq) + '0';
+   string wow;
+   wow.push_back(file);
+   wow.push_back(rank);
+
+   return wow;
+}
+
+
+
+
 void boardDisplay(string boarS)
 {
-   dPce[0] = noPiece;
+   // dPce[0] = noPiece;
    auto offset{0}, flag{errorFlag_D};
 
    auto   rank{bSz / bCol};
@@ -140,68 +203,4 @@ void boardDisplay(string boarS)
    }
    for (auto i{0}; i < bCol; i++) { cout << "  " << file++; }
    cout << endl;
-}
-
-void boardDisplay(vector<u64> boarD, bool intBoard)
-{
-   dPce[0] = noPiece;
-   u64    offset{0}, rank{bSz / bCol};
-   u8     file{'a'};
-   size_t bS{0}, bDRow{0};
-   bS = boarD.size();
-   (bS == pBSz) ? offset = pBCol : offset = bCol;
-   bDRow = bS / offset;
-   auto j{bDRow - 1};
-   std::cout << "\nBoardVec: \n";
-   /*DisplayLoop*/
-   for (auto i{0}; i < bDRow; i++)
-   {
-      if (bS == pBSz)
-      {
-         if ((i >= maxJ) && (rank > 0))
-         {
-            if ((rank < 10) && (rank >= 0)) { cout << " "; }
-            cout << " " << rank;
-            rank--;
-         }
-         else
-         {
-            cout << "   ";
-         }
-      }
-      else
-      {
-         if ((rank < 10) && (rank >= 0)) { cout << " "; }
-         cout << " " << rank;
-         rank--;
-      }
-      for (auto k{0}; k < offset; k++)
-      {
-         auto pos = j * offset + k;
-         (intBoard) ? cout << "  " << boarD[pos]
-                    : cout << "  " << displayMap.at(boarD[pos]);
-
-         //  (boarD[pos] < 32) ? cout << "  " << dPce[boarD[pos]]
-         //                   : cout << "  " << boarD[pos];
-      }
-      cout << endl;
-      j--;
-   }
-   cout << "\n   ";
-   if (bS == pBSz)
-   {
-      for (auto i{0}; i < maxJ - 1; i++) { cout << "   "; }
-   }
-   for (auto i{0}; i < bCol; i++) { cout << "  " << file++; }
-   cout << endl;
-}
-string getName(u64 sq)
-{
-   char   file = (char)(getFile(sq) + 'a' - 1);
-   char   rank = getRank(sq) + '0';
-   string wow;
-   wow.push_back(file);
-   wow.push_back(rank);
-
-   return wow;
 }

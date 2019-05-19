@@ -1,10 +1,18 @@
 #pragma once
+#pragma region includes
 #include <array>
 #include <cassert>
 #include <cstring>
 #include <iostream>
 #include <unordered_map>
 #include <vector>
+using namespace std;
+#pragma endregion includes
+
+
+#pragma region Common
+
+#define dynamicChess 1
 
 #define debug
 #ifdef debug
@@ -17,20 +25,20 @@
 #define hailSithis void *
 #define convertThis (void *)
 
-using namespace std;
 // max board size is 256 (or update in move to square to from square)
-
-#define dynamicChess 0
 
 using u64 = unsigned long long int;
 using s64 = signed long long int;
 using u8 = unsigned char;
 using u32 = unsigned int;
+constexpr int errorFlag_D{123};
 
-#pragma region BoardStructure
+#pragma endregion common
+
+#pragma region Board
 /* --------------BOARD DATA------------------*/
 
-//Make it const and declare in fen, once read cant change?
+// Make it const and declare in fen, once read cant change?
 #if dynamicChess == 1
 extern u64 maxJ; /*knight can jump 2square out of board*/
 /*Boards Data*/
@@ -62,8 +70,7 @@ extern array<u64, pBSz> pBoardC;      // boardPaddedCopy
                                       /*TheBoards End*/
 #endif
 
-extern vector<u64> indexAt;  // board that index piece
-
+extern vector<u64>  indexAt;  // board that index piece
 extern int          activeSide;
 extern unsigned int castle;
 extern int          ep;
@@ -89,9 +96,7 @@ inline int getPIndex(int cfile, int rank)
                 (maxJ * pBCol) - 1);
 }
 extern string getName(u64 sq);
-
-
-inline int getPIndex(string pos)
+inline int    getPIndex(string pos)
 { /*max 2 digit rank*/
    int cfile, rank;
    cfile = pos[0];
@@ -101,18 +106,10 @@ inline int getPIndex(string pos)
    return (int)((((cfile - 'a') + (1) + (maxJ - 1)) + ((rank - 1) * (pBCol))) +
                 (maxJ * pBCol) - 1);
 }
+extern unordered_map<u8, u8> displayMap;
+#pragma endregion            Board
 
-#pragma endregion BoardStructure
-
-// constexpr u8 invalidPiece = '+';
-// constexpr u8 noPiece = '-';
-
-constexpr u8 moveDebug = '.';
-constexpr u8 captureDebug = '*';
-
-constexpr int errorFlag_D{123};
-
-#pragma region packedMove
+#pragma region Move
 /*           Packed Move DATA
  ffff 0000 00 11 ff ffff
 Warning: The number that Gets shifted in should be u64 */
@@ -136,26 +133,31 @@ inline u64    Mv(u64 frmSq, u64 toSq, u64 flag, u64 prmP, u64 startPiece,
           (capPiece << 38) | (moveValue << 46);
 }
 /* END PACKED MOVE DATA*/
-#pragma endregion
+#pragma region moveList
+constexpr u8   moveDebug = '.';
+constexpr u8   captureDebug = '*';
 
-constexpr int maxPosMv{1024}; /*maximum moves possible in a position*/
-struct moveList
+constexpr int maxPosMv{256}; /*maximum moves possible in a position*/
+struct moveListw
 {
    array<u64, maxPosMv> pkdMv;
    int                  mvCount{0}; /*care Man*/
 };
-extern moveList mvList;
-inline void     pshMv(u64 mv)
+
+extern array<u64, maxPosMv> mvList;
+extern array<u64, maxPosMv> mvListCap;
+extern u64                  mvListCapa[maxPosMv];
+
+inline void pshMv(u64 mv, array<u64, maxPosMv> &mList = mvList)
 {
-   mvList.pkdMv[mvList.mvCount] = mv;
-   mvList.mvCount++;
+   mList[0]++;
+   mList[mList[0]] = mv;
 }
 
-extern array<u8, 24> dPce;
-constexpr int        blackOffset{6};  // 6
-extern unordered_map<u8, u8>   displayMap;
+#pragma endregion moveList
+#pragma endregion Move
 
-#pragma region pieceAndDirection
+#pragma region Pieces
 
 #define dN (s64)(pBCol)
 #define dS (-dN)
@@ -181,11 +183,6 @@ constexpr s64 compoundP{3};
 constexpr s64 endMoves{9};
 /*MoveArray end*/
 
-enum materialValue : u8
-{
-   pawnB = 12
-
-};
 constexpr u64 invalidIndex = 0;
 enum pieceGeneric : u8
 {
@@ -235,18 +232,33 @@ extern u64 bBishopL[];
 extern u64 bKnightL[];
 extern u64 bKingL[];
 
+extern constexpr u64        maxPiece{30};
+
+extern array<u64, maxPiece> wLongList;
+extern array<u64, maxPiece> bLongList;
+
+extern array<array<u64, maxPiece>, maxPiece> pieceList;
+extern int                  wPc, wNc, wBc, wRc, wQc, wKc;
+extern int                  bPc, bNc, bBc, bRc, bQc, bKc;
+
+extern int wPat, wNat, wBat, wRat, wQat, wKat;
+extern int bPat, bNat, bBat, bRat, bQat, bKat;
+
+extern int wPstart, wNstart, wBstart, wRstart, wQstart, wKstart;
+extern int bPstart, bNstart, bBstart, bRstart, bQstart, bKstart;
+
 // extern map<u64, u64*> listOf;
 extern const unordered_map<u64, u64 *> listOf;
 #define countOf(x) listOf.at(x)[0]
 #define lastOf(x) listOf.at(x)[0]
-#pragma endregion
+#pragma endregion Pieces
 
 #pragma region functionDefinitions
 /* DEFINITIONS */
 /*board*/
 extern void boardsInit();
 extern void boardDisplay(string boarD);
-extern void boardDisplay(vector<u64> boarD, bool intDisplay = false);
+extern void boardDisplay(const vector<u64> &boarD, bool intDisplay = false);
 
 extern void dire();
 extern void boardPFill(bool display = true);
@@ -255,18 +267,25 @@ extern void boardFill();
 /*move and piece*/
 extern void inline moveGena(int pos, u64 piece = noPiece);
 extern void inline queenMGen(int pos, int color);
-extern void inline pawnMGen(int pos, int color);
-extern void genMove(s64 *pieceM, int pos, int color);
+extern void inline pawnMGen(int pos, int color,
+                            array<u64, maxPosMv> &mList = mvList);
+extern void genMove(s64 *pieceM, int pos, int color,
+                    array<u64, maxPosMv> &mList = mvList);
 extern void genMove(s64 **pieceM, int pos, int color);
 extern void fillPieceList();
 extern void makeMove(u64 pMove);
 extern void unMakeMove(u64 pMove);
+extern u64  isSqAttacked(u64 sq, u64 byColor);
 /* DEFINITIONS */
 #pragma endregion
+
+#pragma region OldComment
 /*--------BOARD DATA END--------------*/
 
 /*
 craap
+
+
 
 extern void inline wPawnMGen(int pos);
 extern void inline bPawnMGen(int pos);
@@ -301,3 +320,5 @@ extern void inline kingMGen(int pos);
 extern void inline rookMGen(int pos);
 extern void inline bishopMGen(int pos);
 */
+
+#pragma endregion

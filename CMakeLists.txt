@@ -8,6 +8,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 set(gls ${CMAKE_SOURCE_DIR}/lib/)
 
 add_executable(chessBingen)
-target_sources(chessBingen PUBLIC src/main.cpp src/fenReader.cpp src/board.cpp src/pieces.cpp src/declarations.cpp src/search.cpp)
+target_sources(chessBingen PUBLIC src/main.cpp src/fenReader.cpp src/board.cpp src/pieces.cpp src/declarations.cpp src/search.cpp src/debug.cpp)
 target_include_directories(chessBingen PUBLIC include lib )
 target_link_directories(chessBingen PUBLIC lib)

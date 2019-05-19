@@ -1,30 +1,17 @@
 #include <data.h>
+
 #include <bitset>
 #include <chrono>
 #include <regex>  //to inititally validate fen
-
-/*
-MAX Board size supported by this fen reader 2048 2MB! (or update in fen)
-
-S/O means selectively optional
-1. reads fen and validate format :Done
-        1.1 pass1 validation is very generous to accomodate varients
-                1.2 pass2 tests for much of fide chess (emphasis on much)
-2. if known reads fen and tell the board size and lists pieces on board :Done
-3. if known identify the variation // no known variations yet
-4. draw the board :Done
-5. check if its a valid position :Done for n/n board
-        5.1 TODO check valid pos for rules, basically there are two
-            and only 2 opposite color kings (for now), and if either is in
-            check its not the opponents move
-
-TODO better Display and debuf (substitiue cout with blank function simething
-llike taht)
-*/
+#include "board.h"
+#include "pieces.h"
 
 using namespace std;
 using namespace std::chrono;
-enum fenParts {
+
+#pragma region fenInternalBoardData
+enum fenParts
+{
    core,
    activePlayerFen,
    Castling,
@@ -37,37 +24,29 @@ enum fenParts {
 /*2MB?!!!*/
 #define boardSizeFen 1024
 /*Prefer to keep it u8 rather than u64*/
-static vector<u64> boardFen(boardSizeFen);
+static vector<u8> boardFen(boardSizeFen);
 
-static int          corePartBoardFen = 0, row{0}, col{0};
-static int          fenEpCounter{0}, hmc{0}, fmc{0}, kingCount{0};
-static array<u8, 3> epSFen{'a', 0, 1};
-static unsigned int castleFen{0};
-static int          halfMcFen{-1};
-static int          fullMcFen{-1};
-static int          activeSideFen{3};
-unsigned char       fenSpace = invalidPiece;
+static int                  corePartBoardFen = 0, row{0}, col{0};
+static int                  fenEpCounter{0}, hmc{0}, fmc{0}, kingCount{0};
+static array<u8, 3>         epSFen{'a', 0, 1};
+static unsigned int         castleFen{0};
+static int                  halfMcFen{-1};
+static int                  fullMcFen{-1};
+static int                  activeSideFen{3};
+unsigned char               fenSpace = invalidPiece;  // 255 currently
+static array<int, maxPiece> pLongListFen;
+static int                  fallenBishopNum{0};
+static int wPnum{0}, wNnum{0}, wBnum{0}, wRnum{0}, wQnum{0}, wKnum{0},
+    wABnum{0};
 
+static int bPnum{0}, bNnum{0}, bBnum{0}, bRnum{0}, bQnum{0}, bKnum{0},
+    bABnum{0};
 void        chessFen(string fen, bool display);
 static int  validateFenRegex(string fen);
 static void stripFluffFen(string &fen);
 static void fillData(int row, int col);
 static void filldata();
-
-/*
-
- for details on there regex see comments at bottom
-passOne broad check, check only format
- passTwo checks foe max 8 rows and 8 columns, chekcs for fide chess pieces only
- requires core fen though
-
- passThree Requires full fen exept the start engine thingie
- as specified in https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation
- rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
-  is it from engine optional
-  #define mkStr_D(x) #x
- #define concat_D(x, y) x##y
-*/
+#pragma endregion
 
 #pragma region regexStuff
 
@@ -119,100 +98,8 @@ static const string passThreeS = posAFen + coreFenS3 + coreFenEnd3 +
 
 #pragma endregion
 
-int validateFenRegex(string fen)
-{
-   int flag{errorFlag_D};
-
-   regex passOne(passOneS);
-   regex passTwo(passTwoS);
-   regex passThree(passThreeS);
-   if (regex_match(fen, passOne)) { flag = 1; }
-   if (regex_match(fen, passTwo)) { flag = 2; }
-   if (regex_match(fen, passThree)) { flag = 3; }
-   return flag;
-}
-void stripFluffFen(string &fen)
-{
-   // removeing the fluff
-   size_t posPos = fen.find("position ");  // length is 9 including space
-   if (posPos != string::npos && posPos == 0) { fen.erase(0, 9); }
-   size_t fenPos = fen.find("fen ");
-   if (fenPos != string::npos && (fenPos == 0)) { fen.erase(0, 4); }
-   // removed the fluff
-}
-
-void fillData(int row, int col)
-{
-#if dynamicChess == 1
-   // cout << "row: " << row << " cpl: " << col << endl;
-   bRow = row;
-   bCol = col;
-   bSz = bRow * bCol;
-   pBRow = (bRow + maxJ * 2);
-   pBCol = (bCol + (maxJ - 1) * 2);
-   pBSz = pBRow * pBCol;
-   board.resize(bSz);
-   pieceAt.resize(pBSz);
-   boardIndexP.resize(bSz);
-
-   //  cout << "row: " << row << " col: " << col << endl;
-#endif
-
-#if dynamicChess == 0
-   // assert(row == bRow && col == bCol);
-   if ((row != bRow) && (col != bCol))
-   { cerr << "ERROR:  InvalidBoardSize InvalidFen"; }
-   // cout << "row: " << row << " col: " << col << endl;
-#endif
-   filldata();
-}
-
-void filldata()
-{
-   boardsInit();
-   int  j{0};
-   int  offset = col + 1;  //+1 for @ or +
-   int  bDR = corePartBoardFen / offset;
-   auto l{bDR - 1};
-   /*Fen Starts From last rank*/
-   for (auto i{0}; i < bDR; i++)
-   {
-      for (auto k{0}; k < offset; k++)
-      {
-         auto pos = l * offset + k;
-         // cout << pos;
-         //   cout << "   " << boardFen[pos];
-
-         if (boardFen[pos] != fenRowBreak && boardFen[pos] != fenSpace)
-         {
-            if (j < bRow * bCol)
-            {
-               board[j] = boardFen[pos];
-               j++;
-            }
-         }
-      }
-      l--;
-      // cout << endl;
-   }
-
-   if (kingCount != 3) { cerr << "FenError:KingCount"; }
-   boardPFill();
-   activeSide = activeSideFen;
-   castle = castleFen;
-  // cout << endl << (char)(epSFen[0]) << " r " << (int)epSFen[1];
-  // cout << endl << ep << endl;
-   ep = getPIndex(epSFen[0], epSFen[1]);
-  // cout << "\n ep " << ep;
-   halfMc = halfMcFen;
-   fullMc = fullMcFen;
-}
-
 void chessFen(string fen, bool display)
 {
-   // timing
-   auto start = high_resolution_clock::now();
-
    /*for generating full board array from condenced fen*/
    int fenLocation{0}, rel{0};
    /*for counting the row and column of core fen and marking its end*/
@@ -263,31 +150,37 @@ void chessFen(string fen, bool display)
                   case 'P':
                   {
                      boardFen[rel] = wP;
+                     wPnum++;
                      break;
                   }
                   case 'N':
                   {
                      boardFen[rel] = wN;
+                     wNnum++;
                      break;
                   }
                   case 'B':
                   {
                      boardFen[rel] = wB;
+                     wBnum++;
                      break;
                   }
                   case 'R':
                   {
                      boardFen[rel] = wR;
+                     wRnum++;
                      break;
                   }
                   case 'Q':
                   {
                      boardFen[rel] = wQ;
+                     wQnum++;
                      break;
                   }
                   case 'K':
                   {
                      boardFen[rel] = wK;
+                     wKnum++;
                      kingCount |= (0x1);
                      break;
                   }
@@ -295,35 +188,44 @@ void chessFen(string fen, bool display)
                   case 'p':
                   {
                      boardFen[rel] = bP;
+                     bPnum++;
                      break;
                   }
                   case 'n':
                   {
                      boardFen[rel] = bN;
+                     bNnum++;
                      break;
                   }
                   case 'b':
                   {
                      boardFen[rel] = bB;
+                     bBnum++;
                      break;
                   }
                   case 'r':
                   {
                      boardFen[rel] = bR;
+                     bRnum++;
                      break;
                   }
                   case 'q':
                   {
                      boardFen[rel] = bQ;
+                     bQnum++;
                      break;
                   }
                   case 'k':
                   {
                      boardFen[rel] = bK;
+                     bKnum++;
                      kingCount |= (0x1) << 1;
                      break;
                   }
-                  default: { boardFen[rel] = fen[ch];
+                  default:
+                  {
+                     fallenBishopNum++;
+                     boardFen[rel] = fen[ch];
                   }
                }
 
@@ -352,7 +254,6 @@ void chessFen(string fen, bool display)
          fenLocation++;
          //         cout << "\n";
       }
-
       if (fenLocation == activePlayerFen)
       {
          if (fen[ch] != ' ')
@@ -394,7 +295,8 @@ void chessFen(string fen, bool display)
 
                   break;
                }
-               default: {
+               default:
+               {
                }
             }
          }
@@ -411,10 +313,9 @@ void chessFen(string fen, bool display)
          if ((fen[ch] != '-') && (fenEpCounter == 0))
          {
             fenEpCounter++;
-      
 
             epSFen[0] = fen[ch];
-           // cout << endl << epSFen[0] << endl;
+            // cout << endl << epSFen[0] << endl;
             epSFen[1] = stoi(&fen[ch + 1]);
          }
          else if ((fen[ch] == '-'))
@@ -445,12 +346,9 @@ void chessFen(string fen, bool display)
          cerr << "ERROR: You'veGotBeKiddingme";
          boardFen[rel] = 'E';
       }
-
       rel++;
    }
 
-   auto stop = high_resolution_clock::now();
-   auto duration = duration_cast<microseconds>(stop - start);
    if (display == true)
    {
       cout << "\nCore part of fen : \n";
@@ -459,12 +357,158 @@ void chessFen(string fen, bool display)
          cout << boardFen[i];
          if (boardFen[i] == '@') { cout << "\n"; }
       }
-      cout << endl << "Time taken: " << duration.count() << " microSec\n";
    }
-
    fillData(row, col);
 };
 
+int validateFenRegex(string fen)
+{
+   int flag{errorFlag_D};
+
+   regex passOne(passOneS);
+   regex passTwo(passTwoS);
+   regex passThree(passThreeS);
+   if (regex_match(fen, passOne)) { flag = 1; }
+   if (regex_match(fen, passTwo)) { flag = 2; }
+   if (regex_match(fen, passThree)) { flag = 3; }
+   return flag;
+}
+void stripFluffFen(string &fen)
+{
+   // removeing the fluff
+   size_t posPos = fen.find("position ");  // length is 9 including space
+   if (posPos != string::npos && posPos == 0) { fen.erase(0, 9); }
+   size_t fenPos = fen.find("fen ");
+   if (fenPos != string::npos && (fenPos == 0)) { fen.erase(0, 4); }
+   // removed the fluff
+}
+
+void fillData(int row, int col)
+{
+#if dynamicChess == 1
+   // cout << "row: " << row << " cpl: " << col << endl;
+   bRow = row;
+   bCol = col;
+   bSz = bRow * bCol;
+   pBRow = (bRow + maxJ * 2);
+   pBCol = (bCol + (maxJ - 1) * 2);
+   pBSz = pBRow * pBCol;
+   board.resize(bSz);
+   pieceAt.resize(pBSz);
+   boardIndexP.resize(bSz);
+
+   //  cout << "row: " << row << " col: " << col << endl;
+#endif
+#if dynamicChess == 0
+   // assert(row == bRow && col == bCol);
+   if ((row != bRow) && (col != bCol))
+   { cerr << "ERROR:  InvalidBoardSize InvalidFen"; }
+   // cout << "row: " << row << " col: " << col << endl;
+#endif
+   filldata();
+}
+
+void filldata()
+{
+   boardsInit();
+   int  j{0};
+   int  offset = col + 1;  //+1 for @ or +
+   int  bDR = corePartBoardFen / offset;
+   auto l{bDR - 1};
+   /*Fen Starts From last rank*/
+   for (auto i{0}; i < bDR; i++)
+   {
+      for (auto k{0}; k < offset; k++)
+      {
+         auto pos = l * offset + k;
+         // cout << pos;
+         //   cout << "   " << boardFen[pos];
+
+         if (boardFen[pos] != fenRowBreak && boardFen[pos] != fenSpace)
+         {
+            if (j < bRow * bCol)
+            {
+               board[j] = boardFen[pos];
+               j++;
+            }
+         }
+      }
+      l--;
+      // cout << endl;
+   }
+
+   if (kingCount != 3) { cerr << "FenError:KingCount"; }
+   boardPFill();
+   activeSide = activeSideFen;
+   castle = castleFen;
+   // cout << endl << (char)(epSFen[0]) << " r " << (int)epSFen[1];
+   // cout << endl << ep << endl;
+   ep = getPIndex(epSFen[0], epSFen[1]);
+   // cout << "\n ep " << ep;
+   halfMc = halfMcFen;
+   fullMc = fullMcFen;
+
+   wPc = wPnum;
+   wNc = wNnum;
+   wBc = wBnum;
+   wRc = wRnum;
+   wQc = wQnum;
+   wKc = wKnum;
+
+   bPc = bPnum;
+   bNc = bNnum;
+   bBc = bBnum;
+   bRc = bRnum;
+   bQc = bQnum;
+   bKc = bKnum;
+   wPstart = 1;
+   wNstart = wBstart + wBc;
+   wBstart = wRstart + wRc;
+   wRstart = wQstart + wQc;
+   wQstart = wPc;
+   wKstart = wNstart + wNc;
+
+   bPstart = 1;
+   bNstart = bBstart + bBc;
+   bBstart = bRstart + bRc;
+   bRstart = bQstart + bQc;
+   bQstart = bPc;
+   bKstart = bNstart + bNc;
+   // bPstart= ; bNstart= ; bBstart= ; bRstart= ; bQstart= ; bKstart= ;
+}
+
+/*
+MAX Board size supported by this fen reader 2048 2MB! (or update in fen)
+
+S/O means selectively optional
+1. reads fen and validate format :Done
+        1.1 pass1 validation is very generous to accomodate varients
+                1.2 pass2 tests for much of fide chess (emphasis on much)
+2. if known reads fen and tell the board size and lists pieces on board :Done
+3. if known identify the variation // no known variations yet
+4. draw the board :Done
+5. check if its a valid position :Done for n/n board
+        5.1 TODO check valid pos for rules, basically there are two
+            and only 2 opposite color kings (for now), and if either is in
+            check its not the opponents move
+
+TODO better Display and debuf (substitiue cout with blank function simething
+llike taht)
+*/
+/*
+
+ for details on there regex see comments at bottom
+passOne broad check, check only format
+ passTwo checks foe max 8 rows and 8 columns, chekcs for fide chess pieces only
+ requires core fen though
+
+ passThree Requires full fen exept the start engine thingie
+ as specified in https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation
+ rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+  is it from engine optional
+  #define mkStr_D(x) #x
+ #define concat_D(x, y) x##y
+*/
 // clang-format off
 /* REGEX DATA
 replace
